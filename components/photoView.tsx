@@ -21,8 +21,6 @@ export default function PhotoView() {
     }
   }, [initializeFlag]);
 
-  console.log(photos != null);
-
   return (
     <>
       {photos != null ? (
