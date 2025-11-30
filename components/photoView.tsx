@@ -35,6 +35,18 @@ export default function PhotoView() {
                   alt={`${c.title} ${c.caption}`}
                 />
                 <h2>{c.title}</h2>
+                <h3>
+                  {(c.title || c.caption) && c.shotAt
+                    ? new Date(c.shotAt).toLocaleString("ja-JP", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false, // 24時間表記
+                      })
+                    : ""}
+                </h3>
                 <h3>{c.caption}</h3>
               </div>
             </React.Fragment>
