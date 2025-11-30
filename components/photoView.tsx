@@ -27,14 +27,16 @@ export default function PhotoView() {
         <>
           {photos.contents.map((c) => (
             <React.Fragment key={c.id}>
-              <Image
-                src={c.photograph.url}
-                width={c.photograph.width / 4}
-                height={c.photograph.height / 4}
-                alt={`${c.title} ${c.caption}`}
-              />
-              <h2>{c.title}</h2>
-              <h3>{c.caption}</h3>
+              <div className="flex flex-col items-center py-4">
+                <Image
+                  src={c.photograph.url}
+                  width={c.photograph.width / 4}
+                  height={c.photograph.height / 4}
+                  alt={`${c.title} ${c.caption}`}
+                />
+                <h2>{c.title}</h2>
+                <h3>{c.caption}</h3>
+              </div>
             </React.Fragment>
           ))}
         </>

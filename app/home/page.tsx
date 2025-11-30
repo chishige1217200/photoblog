@@ -7,29 +7,28 @@ export default async function Home() {
   return (
     <>
       {session !== null ? (
-        <>
-          <h1>{session.user?.name}がログインしたよ</h1>
-          <h2>メールアドレスは{session.user?.email}</h2>
-          <h3>IDは{session.user?.id}</h3>
-          <img src={session.user?.image as string} alt="user image" />
-          <form
-            action={async () => {
-              "use server";
-              await signOut();
-            }}
-          >
-            <button className="gsi-material-button">
-              <div className="gsi-material-button-state"></div>
-              <div className="gsi-material-button-content-wrapper">
-                <span className="gsi-material-button-contents">
-                  ログアウト
-                </span>
-                <span style={{ display: "none" }}>ログアウト</span>
-              </div>
-            </button>
-          </form>
+        <div className="flex flex-col items-center">
+          <div className="flex gap-2 items-center p-4">
+            <h2>ユーザID: {session.user?.email}</h2>
+            <form
+              action={async () => {
+                "use server";
+                await signOut();
+              }}
+            >
+              <button className="gsi-material-button">
+                <div className="gsi-material-button-state"></div>
+                <div className="gsi-material-button-content-wrapper">
+                  <span className="gsi-material-button-contents">
+                    ログアウト
+                  </span>
+                  <span style={{ display: "none" }}>ログアウト</span>
+                </div>
+              </button>
+            </form>
+          </div>
           <PhotoView />
-        </>
+        </div>
       ) : (
         <></>
       )}
