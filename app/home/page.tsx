@@ -18,7 +18,15 @@ export default async function Home() {
               await signOut();
             }}
           >
-            <button type="submit">Signout</button>
+            <button className="gsi-material-button">
+              <div className="gsi-material-button-state"></div>
+              <div className="gsi-material-button-content-wrapper">
+                <span className="gsi-material-button-contents">
+                  ログアウト
+                </span>
+                <span style={{ display: "none" }}>ログアウト</span>
+              </div>
+            </button>
           </form>
           <PhotoView />
         </>
