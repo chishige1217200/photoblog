@@ -1,4 +1,5 @@
 import { auth, signOut } from "@/auth";
+import PhotoView from "@/components/photoView";
 
 export default async function Home() {
   let session = null;
@@ -25,6 +26,7 @@ export default async function Home() {
           >
             <button type="submit">Signout</button>
           </form>
+          <PhotoView />
         </>
       ) : (
         <></>
