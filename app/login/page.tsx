@@ -1,4 +1,5 @@
 import { signIn, auth } from "@/auth";
+import Image from "next/image";
 
 export default async function Home() {
   const session = await auth();
@@ -8,8 +9,9 @@ export default async function Home() {
       {session !== null ? (
         <></>
       ) : (
-        <>
-          <h1>ログインしてね</h1>
+        <div className="flex flex-col justify-center items-center min-h-screen py-2 space-y-4">
+          <Image src="/icon.svg" width={120} height={120} alt="" />
+          <h1>PhotoBlogにログインする</h1>
           <form
             action={async () => {
               "use server";
@@ -53,7 +55,7 @@ export default async function Home() {
               </div>
             </button>
           </form>
-        </>
+        </div>
       )}
     </>
   );
