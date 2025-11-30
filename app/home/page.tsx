@@ -2,13 +2,7 @@ import { auth, signOut } from "@/auth";
 import PhotoView from "@/components/photoView";
 
 export default async function Home() {
-  let session = null;
-
-  console.log(session);
-
-  session = await auth();
-
-  console.log(session);
+  const session = await auth();
 
   return (
     <>
