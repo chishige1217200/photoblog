@@ -1,10 +1,10 @@
 export interface Photos {
   contents: {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-    revisedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
+    publishedAt: Date;
+    revisedAt: Date;
     photograph: {
       url: string;
       height: number;
@@ -13,6 +13,7 @@ export interface Photos {
     title: string;
     caption: string;
     userId: string;
+    shotAt: Date;
   }[];
   totalCount: number;
   offset: number;
