@@ -11,7 +11,7 @@ export default async function Home() {
       ) : (
         <div className="flex flex-col justify-center items-center min-h-screen py-2 space-y-4">
           <Image src="/icon.svg" width={120} height={120} alt="" />
-          <h1>PhotoBlogにログインする</h1>
+          <h1>PhotoBlog</h1>
           <form
             action={async () => {
               "use server";
