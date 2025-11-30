@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 
-export async function GET(req: Request) {
+export async function GET() {
   const session = await auth();
   if (!session) return new Response("Unauthorized", { status: 401 });
 
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   }
 
   const res = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photos?filters=userId[equals]${session.user?.email}`,
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photos?filters=userId[equals]${session.user?.email}&orders=-shotAt`,
     {
       method: "GET",
       headers: {
