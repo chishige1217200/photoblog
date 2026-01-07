@@ -20,7 +20,7 @@ export default async function Home() {
         <></>
       ) : (
         <div className="flex flex-col justify-center items-center min-h-screen py-2 space-y-4">
-          <Card className="relative w-full max-w-[350px] overflow-hidden">
+          <Card className="relative w-full max-w-[350px] overflow-hidden items-center">
             <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]}/>
             <CardContent>
               <Image src="/icon.svg" width={120} height={120} alt="" />
