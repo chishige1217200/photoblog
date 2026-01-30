@@ -1,19 +1,19 @@
-export interface Photos {
+export type Photos = {
   contents: {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-    revisedAt: string;
-    photograph: {
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+    revisedAt?: string;
+    photograph?: {
       url: string;
       height: number;
       width: number;
     };
-    title: string;
-    caption: string;
-    userId: string;
-    shotAt: string;
+    title?: string;
+    caption?: string;
+    shotAt?: string;
+    ownerUserId?: string;
   }[];
   totalCount: number;
   offset: number;

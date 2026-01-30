@@ -13,7 +13,7 @@ export async function GET() {
   }
 
   const res = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photos?filters=userId[equals]${session.user?.email}&orders=-shotAt`,
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photos?filters=ownerUserId[equals]${session.user?.email}&orders=-shotAt`,
     {
       method: "GET",
       headers: {
