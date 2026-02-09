@@ -14,15 +14,10 @@ export async function POST(req: Request) {
     return new Response("No file provided", { status: 400 });
   }
 
-  // ① File → Buffer
+  // sharpでEXIFを除去
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-
-  // ② sharp で EXIF を除去
-  const noExifBuffer = await sharp(buffer)
-    .jpeg({ quality: 90 })
-    .withMetadata({ exif: undefined })
-    .toBuffer();
+  const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
 
   // ③ microCMS 送信用の FormData 作成
   const microcmsForm = new FormData();
