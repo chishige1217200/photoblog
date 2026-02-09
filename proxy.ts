@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "./auth";
 
 export async function proxy(request: { url: string | URL | undefined }) {
+  const testMode = process.env.TEST_MODE === "true";
+  if (testMode) {
+    console.log("Test Mode: Enabled");
+  }
+
   console.log("request.url: ", request.url);
 
   const session = await auth();
@@ -13,11 +18,19 @@ export async function proxy(request: { url: string | URL | undefined }) {
   }
 
   if (
-    String(request.url).match(/^.+login$/) ||
+    String(request.url).match(/^.+login/) ||
     String(request.url).match(/^.+\/$/)
   ) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
+
+  // テストモードのみアクセス可能なページの制御
+  if (!testMode) {
+    if(String(request.url).match(/^.+test/)) {
+      return NextResponse.redirect(new URL("/home", request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
