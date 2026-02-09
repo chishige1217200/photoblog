@@ -10,6 +10,11 @@ export default function UploadPhoto() {
   const callJsonApi = async () => {
     const res = await fetch("/api/photos");
 
+    if (!res.ok) {
+      const error = await res.text();
+      return alert(`JSON API 呼び出し失敗: ${error}`);
+    }
+
     const data = await res.json();
     setResult(data);
   };
@@ -25,6 +30,11 @@ export default function UploadPhoto() {
       method: "POST",
       body: formData,
     });
+
+    if (!res.ok) {
+      const error = await res.text();
+      return alert(`ファイルアップロードAPI 呼び出し失敗: ${error}`);
+    }
 
     const data = await res.json();
     setResult(data);
