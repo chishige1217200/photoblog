@@ -20,6 +20,7 @@ const formatDate = (dateStr?: string) => {
 };
 
 const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
+  const [loading, setLoading] = useState<boolean>(true);
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
 
@@ -34,6 +35,7 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
   useEffect(() => {
     if (!ready) return;
     if (!bookRef.current) return;
+    if (!loading) return;
 
     const pages = Array.from(
       bookRef.current.querySelectorAll(".page"),
@@ -50,11 +52,14 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
     });
 
     flipRef.current.loadFromHTML(pages);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(false);
 
     return () => {
       flipRef.current?.destroy();
       flipRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, photos, width, height]);
 
   return (
@@ -64,6 +69,7 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
         width,
         height,
         margin: "0 auto",
+        visibility: loading ? "hidden" : "visible",
       }}
     >
       <div className="page" data-density="hard">

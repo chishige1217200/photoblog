@@ -23,7 +23,6 @@ export default function PhotoBookLoader() {
 
   useEffect(() => {
     if (!initializeFlag) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitializeFlag(true);
       fetchPhotos();
     }
