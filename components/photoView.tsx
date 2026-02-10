@@ -9,7 +9,7 @@ export default function PhotoView() {
   const [photos, setPhotos] = useState<CmsPhotos | null>(null);
 
   const fetchPhotos = async () => {
-    const response = await fetch("api/photo");
+    const response = await fetch("/api/photo");
     const photos = await response.json() as Photos;
     setPhotos(photos);
   };
