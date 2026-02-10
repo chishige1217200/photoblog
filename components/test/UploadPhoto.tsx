@@ -8,7 +8,7 @@ export default function UploadPhoto() {
 
   // JSON API 呼び出し
   const callJsonApi = async () => {
-    const res = await fetch("/api/photos");
+    const res = await fetch("/api/photo");
 
     if (!res.ok) {
       const error = await res.text();

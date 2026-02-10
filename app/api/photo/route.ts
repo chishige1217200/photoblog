@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { CmsPhotos, convertToPhoto, convertToPhotos } from "@/types/microCMS/photo";
+import { CmsPhotos, convertToPhotos } from "@/types/microCMS/photo";
 
 export async function GET() {
   const session = await auth();
@@ -11,7 +11,7 @@ export async function GET() {
 
   // microCMSからデータを取得
   const res = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo?filters=ownerUserId[equals]${session.user?.email}&orders=-shotAt`,
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo?filters=ownerUserId[equals]${session.user?.email}&orders=-updatedAt`,
     {
       method: "GET",
       headers: {
