@@ -1,15 +1,16 @@
 "use client";
-import { Photos } from "@/types/photos";
+import { CmsPhotos } from "@/types/microCMS/photo";
+import { Photos } from "@/types/PhotoBlog/photo";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 export default function PhotoView() {
   const [initializeFlag, setInitializeFlag] = useState(false);
-  const [photos, setPhotos] = useState<Photos | null>(null);
+  const [photos, setPhotos] = useState<CmsPhotos | null>(null);
 
   const fetchPhotos = async () => {
     const response = await fetch("api/photo");
-    const photos = await response.json();
+    const photos = await response.json() as Photos;
     setPhotos(photos);
   };
 
