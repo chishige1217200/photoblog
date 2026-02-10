@@ -45,7 +45,7 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
       size: "fixed" as SizeType,
       showCover: true,
       useMouseEvents: true,
-      mobileScrollSupport: false,
+      mobileScrollSupport: true,
     });
 
     flipRef.current.loadFromHTML(pages);

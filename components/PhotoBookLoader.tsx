@@ -1,4 +1,5 @@
 "use client";
+import { GetWindowSize } from "@/hook/GetWindowSize";
 import { Photos } from "@/types/PhotoBlog/photo";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -17,6 +18,9 @@ export default function PhotoBookLoader() {
     setPhotos(photos);
   };
 
+  const { width, height } = GetWindowSize();
+  console.log(width, height);
+
   useEffect(() => {
     if (!initializeFlag) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -25,8 +29,12 @@ export default function PhotoBookLoader() {
     }
   }, [initializeFlag]);
   return (
-    <div className="p-10">
-      <PhotoBook photos={photos?.contents || []} width={800} height={800} />
+    <div className="p-2">
+      <PhotoBook
+        photos={photos?.contents || []}
+        width={(width - 32) / 2}
+        height={height - 32}
+      />
     </div>
   );
 }
