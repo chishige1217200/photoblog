@@ -1,0 +1,60 @@
+.page {
+  background: white;
+  box-sizing: border-box;
+  padding: 50px;
+  border: #502200 2px solid;
+}
+
+.photo-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---- 横写真 ---- */
+.photo-container.landscape .image-area {
+  height: 70%;
+}
+
+/* ---- 縦写真 ---- */
+.photo-container.portrait .image-area {
+  height: 85%;
+}
+
+.image-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-area img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 情報エリアは常に下固定 */
+.info-area {
+  height: 30%;
+  padding-top: 8px;
+  text-align: center;
+}
+
+.photo-container.portrait .info-area {
+  height: 15%;
+}
+
+.info-area h3 {
+  margin: 4px 0;
+  font-size: 18px;
+}
+
+.info-area p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.info-area .shotAt {
+  font-size: 12px;
+  color: #666;
+}

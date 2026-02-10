@@ -1,24 +1,34 @@
 "use client";
-
+import "@/styles/pageflip.css";
 import React, { useEffect, useRef, useState } from "react";
 import { PageFlip, SizeType } from "page-flip";
+import { Photo } from "@/types/PhotoBlog/photo";
 
 type Props = {
-  images: string[];
+  photos: Photo[];
   width?: number;
   height?: number;
 };
 
-const PhotoBook: React.FC<Props> = ({ images, width = 400, height = 600 }) => {
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+};
+
+const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
 
-  const [ready, setReady] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
 
-  // 画像が全部読み込まれたら ready にする
   const handleImageLoad = () => {
-    setReady(true);
+    setLoadedCount((c) => c + 1);
   };
+
+  const ready = loadedCount === photos.length && photos.length > 0;
 
   useEffect(() => {
     if (!ready) return;
@@ -27,7 +37,6 @@ const PhotoBook: React.FC<Props> = ({ images, width = 400, height = 600 }) => {
     const pages = Array.from(
       bookRef.current.querySelectorAll(".page"),
     ) as HTMLElement[];
-
     if (pages.length === 0) return;
 
     flipRef.current = new PageFlip(bookRef.current, {
@@ -36,8 +45,6 @@ const PhotoBook: React.FC<Props> = ({ images, width = 400, height = 600 }) => {
       size: "fixed" as SizeType,
       showCover: true,
       useMouseEvents: true,
-      minWidth: 300,
-      maxWidth: 1000,
       mobileScrollSupport: false,
     });
 
@@ -47,7 +54,7 @@ const PhotoBook: React.FC<Props> = ({ images, width = 400, height = 600 }) => {
       flipRef.current?.destroy();
       flipRef.current = null;
     };
-  }, [ready, images, width, height]);
+  }, [ready, photos, width, height]);
 
   return (
     <div
@@ -58,24 +65,53 @@ const PhotoBook: React.FC<Props> = ({ images, width = 400, height = 600 }) => {
         margin: "0 auto",
       }}
     >
-      {images.map((src, i) => (
-        <div className="page w-full" key={i}>
-          <img
-            src={src}
-            onLoad={handleImageLoad}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              backgroundColor: "#fff",
-              borderColor: "#ccc",
-              borderWidth: "1px",
-              borderStyle: "solid",
-            }}
-          />
-          AAA
+      <div className="page" data-density="hard">
+        <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
+          <h2 className="text-center text-5xl">Page Cover</h2>
         </div>
-      ))}
+      </div>
+      {photos.map((photo) => {
+        const isPortrait =
+          photo.photograph && photo.photograph.height > photo.photograph.width;
+
+        return (
+          <div className="page" key={photo.id}>
+            <div
+              className={`photo-container ${
+                isPortrait ? "portrait" : "landscape"
+              }`}
+            >
+              <div className="image-area">
+                <img
+                  src={photo.photograph?.url}
+                  onLoad={handleImageLoad}
+                  alt={photo.title ?? ""}
+                />
+              </div>
+
+              <div className="info-area font-medium text-zinc-950 dark:text-zinc-50">
+                {photo.title && <h3>{photo.title}</h3>}
+                {photo.caption && <p>{photo.caption}</p>}
+                {photo.shotAt && (
+                  <p className="shotAt">📅 {formatDate(photo.shotAt)}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {photos.length % 2 !== 0 && (
+        <div className="page">
+          <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
+            <h2 className="text-center text-5xl">Dummy</h2>
+          </div>
+        </div>
+      )}
+      <div className="page" data-density="hard">
+        <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
+          <h2 className="text-center text-5xl">Page Cover</h2>
+        </div>
+      </div>
     </div>
   );
 };

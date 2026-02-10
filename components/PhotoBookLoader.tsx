@@ -1,6 +1,4 @@
 "use client";
-
-import { CmsPhotos } from "@/types/microCMS/photo";
 import { Photos } from "@/types/PhotoBlog/photo";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -11,7 +9,7 @@ const PhotoBook = dynamic(() => import("./PhotoBook"), {
 
 export default function PhotoBookLoader() {
   const [initializeFlag, setInitializeFlag] = useState(false);
-  const [photos, setPhotos] = useState<CmsPhotos | null>(null);
+  const [photos, setPhotos] = useState<Photos | null>(null);
 
   const fetchPhotos = async () => {
     const response = await fetch("/api/photo");
@@ -26,5 +24,9 @@ export default function PhotoBookLoader() {
       fetchPhotos();
     }
   }, [initializeFlag]);
-  return <PhotoBook images={photos?.contents.map((c) => c.photograph?.url || "") || []} width={800} height={800} />;
+  return (
+    <div className="p-10">
+      <PhotoBook photos={photos?.contents || []} width={800} height={800} />
+    </div>
+  );
 }
