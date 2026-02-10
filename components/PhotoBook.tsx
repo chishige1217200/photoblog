@@ -3,6 +3,7 @@ import "@/styles/pageflip.css";
 import React, { useEffect, useRef, useState } from "react";
 import { PageFlip, SizeType } from "page-flip";
 import { Photo } from "@/types/PhotoBlog/photo";
+import Image from "next/image";
 
 type Props = {
   photos: Photo[];
@@ -82,10 +83,18 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
               }`}
             >
               <div className="image-area">
-                <img
+                {/* <img
                   src={photo.photograph?.url}
                   onLoad={handleImageLoad}
                   alt={photo.title ?? ""}
+                /> */}
+                <Image
+                  src={photo.photograph?.url ?? ""}
+                  alt={photo.title ?? ""}
+                  width={photo.photograph?.width ?? 0}
+                  height={photo.photograph?.height ?? 0}
+                  loading="eager"
+                  onLoad={handleImageLoad}
                 />
               </div>
 
