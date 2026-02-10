@@ -8,7 +8,7 @@ export default function PhotoView() {
   const [photos, setPhotos] = useState<Photos | null>(null);
 
   const fetchPhotos = async () => {
-    const response = await fetch("api/photos");
+    const response = await fetch("api/photo");
     const photos = await response.json();
     setPhotos(photos);
   };
@@ -28,12 +28,14 @@ export default function PhotoView() {
           {photos.contents.map((c) => (
             <React.Fragment key={c.id}>
               <div className="flex flex-col items-center py-4">
-                <Image
-                  src={c.photograph.url}
-                  width={c.photograph.width / 4}
-                  height={c.photograph.height / 4}
-                  alt={`${c.title} ${c.caption}`}
-                />
+                {c.photograph && (
+                  <Image
+                    src={c.photograph.url}
+                    width={c.photograph.width / 4}
+                    height={c.photograph.height / 4}
+                    alt={`${c.title} ${c.caption}`}
+                  />
+                )}
                 <h2>{c.title}</h2>
                 <h3>
                   {(c.title || c.caption) && c.shotAt
