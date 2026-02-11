@@ -18,6 +18,8 @@ import {
   Portal,
   QrCode,
   Clipboard,
+  CloseButton,
+  Center,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { HiUpload } from "react-icons/hi";
@@ -273,7 +275,9 @@ export default function PhotoForm() {
                       </Dialog.Description>
                     </Dialog.Body>
                     <Dialog.Footer>
-                      <Button variant="outline">いいえ</Button>
+                      <Dialog.ActionTrigger asChild>
+                        <CloseButton variant="outline">いいえ</CloseButton>
+                      </Dialog.ActionTrigger>
                       <Button colorPalette="red">はい</Button>
                     </Dialog.Footer>
                   </Dialog.Content>
@@ -305,14 +309,18 @@ export default function PhotoForm() {
                           </Clipboard.Trigger>
                         </Clipboard.Root>
                       </div>
-                      <QrCode.Root value={url || ""} size="2xl">
-                        <QrCode.Frame>
-                          <QrCode.Pattern />
-                        </QrCode.Frame>
-                      </QrCode.Root>
+                      <Center>
+                        <QrCode.Root value={url || ""} size="2xl">
+                          <QrCode.Frame>
+                            <QrCode.Pattern />
+                          </QrCode.Frame>
+                        </QrCode.Root>
+                      </Center>
                     </Dialog.Body>
                     <Dialog.Footer>
-                      <Button variant="outline">閉じる</Button>
+                      <Dialog.ActionTrigger asChild>
+                        <CloseButton variant="outline">閉じる</CloseButton>
+                      </Dialog.ActionTrigger>
                     </Dialog.Footer>
                   </Dialog.Content>
                 </Dialog.Positioner>
