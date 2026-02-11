@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { CmsPhotos, convertToPhotos } from "@/types/microCMS/photo";
+import { CmsBooks, convertToBooks } from "@/types/microCMS/book";
 
 export async function GET() {
   const session = await auth();
@@ -11,7 +11,7 @@ export async function GET() {
 
   // microCMSからデータを取得
   const res = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo?filters=ownerUserId[equals]${session.user?.email}&orders=-updatedAt`,
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/book?filters=ownerUserId[equals]${session.user?.email}&orders=-updatedAt`,
     {
       method: "GET",
       headers: {
@@ -20,10 +20,14 @@ export async function GET() {
     },
   );
 
-  const data = await res.json() as CmsPhotos;
+  if (!res.ok) {
+    return new Response("Failed to fetch book data", { status: res.status });
+  }
+
+  const data = (await res.json()) as CmsBooks;
   console.log(data);
 
-  const response = convertToPhotos(data, session.user?.email ?? undefined);
+  const response = convertToBooks(data, session.user?.email ?? undefined);
 
   return Response.json(response);
 }
