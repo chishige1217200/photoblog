@@ -27,7 +27,7 @@ export async function GET() {
   const data = (await res.json()) as CmsPhotos;
   console.log(data);
 
-  const response = convertToPhotos(data, session.user?.email ?? undefined);
+  const response = convertToPhotos(data, session.user?.email ?? "");
 
   return Response.json(response);
 }

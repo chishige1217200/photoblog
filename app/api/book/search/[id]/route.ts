@@ -36,7 +36,7 @@ export async function GET(
   const data = (await res.json()) as CmsBook;
   console.log(data);
 
-  const response = convertToBook(data, session.user?.email ?? undefined);
+  const response = convertToBook(data, session.user?.email ?? "");
 
   return Response.json(response);
 }

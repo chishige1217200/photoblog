@@ -34,11 +34,29 @@ export const convertToList = (allowedUserIds?: string): string[] => {
     .filter((id) => id.length > 0);
 };
 
-export const isOwner = (book: CmsBook, ownerUserId?: string): boolean => {
+export const convertFromList = (userIdList: string[]): string => {
+  return userIdList.join(",");
+};
+
+export const isOwner = (book: CmsBook, ownerUserId: string): boolean => {
   return ownerUserId !== undefined && book.ownerUserId === ownerUserId;
 };
 
-export const convertToBook = (book: CmsBook, ownerUserId?: string): Book => {
+export const isCollaborator = (book: CmsBook, userId: string): boolean => {
+  if (!userId || !book.collaborateUserIds) {
+    return false;
+  }
+  return convertToList(book.collaborateUserIds).includes(userId);
+};
+
+export const isAllowedUser = (book: CmsBook, userId: string): boolean => {
+  if (!userId || !book.allowUserIds) {
+    return false;
+  }
+  return convertToList(book.allowUserIds).includes(userId);
+};
+
+export const convertToBook = (book: CmsBook, userId: string): Book => {
   return {
     id: book.id,
     createdAt: book.createdAt,
@@ -49,21 +67,20 @@ export const convertToBook = (book: CmsBook, ownerUserId?: string): Book => {
     subTitle: book.subTitle,
     author: book.author,
     photographs:
-      book.photographs?.map((photo) => convertToPhoto(photo, ownerUserId)) ||
-      [],
+      book.photographs?.map((photo) => convertToPhoto(photo, userId)) || [],
     isPrivate: book.isPrivate,
-    allowUserIds: book.allowUserIds,
-    collaborateUserIds: book.collaborateUserIds,
-    isOwner: isOwner(book, ownerUserId),
+    isAllowedUser: isAllowedUser(book, userId),
+    isCollaborator: isCollaborator(book, userId),
+    isOwner: isOwner(book, userId),
   };
 };
 
 export const convertToBooks = (
   cmsBooks: CmsBooks,
-  ownerUserId?: string,
+  userId: string,
 ): Books => {
   return {
-    contents: cmsBooks.contents.map((book) => convertToBook(book, ownerUserId)),
+    contents: cmsBooks.contents.map((book) => convertToBook(book, userId)),
     totalCount: cmsBooks.totalCount,
     offset: cmsBooks.offset,
     limit: cmsBooks.limit,

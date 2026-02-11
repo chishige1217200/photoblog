@@ -11,8 +11,8 @@ export type Book = {
   author?: string;
   photographs?: Photo[];
   isPrivate?: boolean;
-  allowUserIds?: string;
-  collaborateUserIds?: string;
+  isAllowedUser?: boolean;
+  isCollaborator?: boolean;
   isOwner?: boolean;
 };
 
