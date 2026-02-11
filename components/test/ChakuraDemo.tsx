@@ -16,8 +16,10 @@ import {
   ActionBar,
   Dialog,
   Portal,
+  QrCode,
+  Clipboard,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HiUpload } from "react-icons/hi";
 import {
   LuCircleArrowLeft,
@@ -26,6 +28,7 @@ import {
   LuShare,
   LuShare2,
 } from "react-icons/lu";
+import { Toaster, toaster } from "../ui/toaster";
 
 export default function PhotoForm() {
   const [title, setTitle] = useState("");
@@ -36,6 +39,11 @@ export default function PhotoForm() {
   const [editors, setEditors] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    setUrl(window.location.href);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,8 +64,16 @@ export default function PhotoForm() {
 
     console.log("Form Data:");
     for (const pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1]}`);
+      console.log(`  ${pair[0]}: ${pair[1]}`);
     }
+
+    toaster.create({
+      description: "File saved successfully",
+      type: "success",
+      closable: true,
+    });
+
+    console.log("Form submitted");
 
     // try {
     //   const res = await fetch("/api/photos", {
@@ -268,16 +284,27 @@ export default function PhotoForm() {
                 <Dialog.Positioner>
                   <Dialog.Content>
                     <Dialog.Header>
-                      <Dialog.Title>確認</Dialog.Title>
+                      <Dialog.Title>リンク</Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body>
-                      <Dialog.Description>
-                        操作中の画面から離れます。よろしいですか？
-                      </Dialog.Description>
+                      <div className="flex items-center gap-2">
+                        <Text>{url}</Text>
+                        <Clipboard.Root value={url || ""}>
+                          <Clipboard.Trigger asChild>
+                            <Button variant="surface" size="sm">
+                              <Clipboard.Indicator />
+                            </Button>
+                          </Clipboard.Trigger>
+                        </Clipboard.Root>
+                      </div>
+                      <QrCode.Root value={url || ""} size="2xl">
+                        <QrCode.Frame>
+                          <QrCode.Pattern />
+                        </QrCode.Frame>
+                      </QrCode.Root>
                     </Dialog.Body>
                     <Dialog.Footer>
-                      <Button variant="outline">いいえ</Button>
-                      <Button colorPalette="red">はい</Button>
+                      <Button variant="outline">閉じる</Button>
                     </Dialog.Footer>
                   </Dialog.Content>
                 </Dialog.Positioner>
