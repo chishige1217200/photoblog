@@ -37,7 +37,7 @@ export default function PhotoForm() {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(true);
   const [viewers, setViewers] = useState<string[]>([]);
   const [editors, setEditors] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
