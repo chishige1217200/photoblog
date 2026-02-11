@@ -29,6 +29,7 @@ import {
   LuShare2,
 } from "react-icons/lu";
 import { Toaster, toaster } from "../ui/toaster";
+import { Lens } from "../ui/lens";
 
 export default function PhotoForm() {
   const [title, setTitle] = useState("");
@@ -216,7 +217,14 @@ export default function PhotoForm() {
                 </FileUpload.Trigger>
                 <Field.HelperText>フォトプレビュー</Field.HelperText>
                 {previewImage ? (
-                  <img src={previewImage} alt="Preview" />
+                  <Lens
+                    zoomFactor={2}
+                    lensSize={150}
+                    isStatic={false}
+                    ariaLabel="Zoom Area"
+                  >
+                    <img src={previewImage} alt="Preview" />
+                  </Lens>
                 ) : (
                   <Skeleton className="w-full aspect-4/3" />
                 )}
