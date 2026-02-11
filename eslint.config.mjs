@@ -13,6 +13,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    experimental: {
+      optimizePackageImports: ["@chakra-ui/react"],
+    },
+  },
 ]);
 
 export default eslintConfig;
