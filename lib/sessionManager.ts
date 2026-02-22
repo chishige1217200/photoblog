@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { Session } from "next-auth";
 
 export async function getUserSession(): Promise<Session | null> {
-  const offlineMode = process.env.OFFLINE_MODE === "true";
+  const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
   if (offlineMode) {
     return {
       user: {

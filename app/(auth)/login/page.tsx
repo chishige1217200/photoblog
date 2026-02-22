@@ -13,6 +13,7 @@ import { ShineBorder } from "@/components/ui/shine-border";
 import Image from "next/image";
 
 export default async function Home() {
+  const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
   const session = await getUserSession();
 
   return (
@@ -36,7 +37,7 @@ export default async function Home() {
                   await signIn("google", { redirectTo: "/home" });
                 }}
               >
-                <button className="w-full gsi-material-button">
+                <button className="w-full gsi-material-button" disabled={offlineMode}>
                   <div className="gsi-material-button-state"></div>
                   <div className="gsi-material-button-content-wrapper">
                     <div className="gsi-material-button-icon">

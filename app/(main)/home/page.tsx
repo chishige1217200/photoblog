@@ -3,6 +3,7 @@ import { getUserSession } from "@/lib/sessionManager";
 import PhotoView from "@/components/photoView";
 
 export default async function Home() {
+  const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
   const session = await getUserSession();
 
   return (
@@ -14,10 +15,10 @@ export default async function Home() {
             <form
               action={async () => {
                 "use server";
-                await signOut({redirectTo: "/login"});
+                await signOut({ redirectTo: "/login" });
               }}
             >
-              <button className="gsi-material-button">
+              <button className="gsi-material-button" disabled={offlineMode}>
                 <div className="gsi-material-button-state"></div>
                 <div className="gsi-material-button-content-wrapper">
                   <span className="gsi-material-button-contents">
