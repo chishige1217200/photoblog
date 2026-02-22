@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/sessionManager";
 import { CmsBook, convertToBook } from "@/types/microCMS/book";
 import { NextRequest } from "next/server";
 
@@ -6,7 +6,7 @@ export async function GET(
   _req: NextRequest,
   ctx: RouteContext<"/api/photo/search/[id]">,
 ) {
-  const session = await auth();
+  const session = await getUserSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
   if (!process.env.MICROCMS_SERVICE_DOMAIN)
     return new Response("MICROCMS_SERVICE_DOMAIN is required", { status: 500 });

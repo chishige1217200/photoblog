@@ -1,4 +1,5 @@
-import { signIn, auth } from "@/auth";
+import { signIn } from "@/auth";
+import { getUserSession } from "@/lib/sessionManager";
 import { AuroraText } from "@/components/ui/aurora-text";
 import {
   Card,
@@ -12,7 +13,7 @@ import { ShineBorder } from "@/components/ui/shine-border";
 import Image from "next/image";
 
 export default async function Home() {
-  const session = await auth();
+  const session = await getUserSession();
 
   return (
     <>

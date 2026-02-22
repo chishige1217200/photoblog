@@ -1,8 +1,8 @@
-import { auth } from "@/auth";
+import { getUserSession } from "@/lib/sessionManager";
 import { CmsBooks, convertToBooks } from "@/types/microCMS/book";
 
 export async function GET() {
-  const session = await auth();
+  const session = await getUserSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
   if (!process.env.MICROCMS_SERVICE_DOMAIN)
     return new Response("MICROCMS_SERVICE_DOMAIN is required", { status: 500 });

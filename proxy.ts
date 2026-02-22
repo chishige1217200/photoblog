@@ -1,5 +1,5 @@
+import { getUserSession } from "./lib/sessionManager";
 import { NextResponse } from "next/server";
-import { auth } from "./auth";
 
 export async function proxy(request: { url: string | URL | undefined }) {
   const testMode = process.env.TEST_MODE === "true";
@@ -9,7 +9,7 @@ export async function proxy(request: { url: string | URL | undefined }) {
 
   console.log("request.url: ", request.url);
 
-  const session = await auth();
+  const session = await getUserSession();
   if (!session) {
     if (String(request.url).match(/^.+login$/)) {
       return NextResponse.next();

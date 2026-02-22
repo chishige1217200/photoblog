@@ -1,8 +1,9 @@
-import { auth, signOut } from "@/auth";
+import { signOut } from "@/auth";
+import { getUserSession } from "@/lib/sessionManager";
 import PhotoView from "@/components/photoView";
 
 export default async function Home() {
-  const session = await auth();
+  const session = await getUserSession();
 
   return (
     <>
