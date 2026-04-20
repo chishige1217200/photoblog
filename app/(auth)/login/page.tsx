@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ShineBorder } from "@/components/ui/shine-border";
 import Image from "next/image";
+import Link from "next/link";
 
 export default async function Home() {
   const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
@@ -23,12 +24,24 @@ export default async function Home() {
       ) : (
         <div className="flex flex-col justify-center items-center min-h-screen py-2 space-y-4">
           <Card className="relative w-full max-w-[350px] overflow-hidden items-center">
-            <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]}/>
+            <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
             <CardContent>
               <Image src="/icon.svg" width={120} height={120} alt="" />
               <CardTitle className="text-3xl font-bold tracking-tighter">
                 <AuroraText>PhotoBlog</AuroraText>
               </CardTitle>
+            </CardContent>
+            <CardContent>
+              <div>続行することにより、</div>
+              <div>
+                <Link
+                  href={"/terms"}
+                  className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600"
+                >
+                  利用規約
+                </Link>
+                に同意したものとみなします。
+              </div>
             </CardContent>
             <CardFooter>
               <form
@@ -37,7 +50,10 @@ export default async function Home() {
                   await signIn("google", { redirectTo: "/home" });
                 }}
               >
-                <button className="w-full gsi-material-button" disabled={offlineMode}>
+                <button
+                  className="w-full gsi-material-button"
+                  disabled={offlineMode}
+                >
                   <div className="gsi-material-button-state"></div>
                   <div className="gsi-material-button-content-wrapper">
                     <div className="gsi-material-button-icon">

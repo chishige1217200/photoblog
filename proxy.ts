@@ -11,7 +11,7 @@ export async function proxy(request: { url: string | URL | undefined }) {
 
   const session = await getUserSession();
   if (!session) {
-    if (String(request.url).match(/^.+login$/)) {
+    if (String(request.url).match(/^.+terms$/) || String(request.url).match(/^.+login$/)) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL("/login", request.url));
