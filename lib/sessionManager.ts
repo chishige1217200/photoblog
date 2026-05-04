@@ -19,3 +19,35 @@ export async function getUserSession(): Promise<Session | null> {
 
   return session;
 }
+
+/**
+ * サービスがクローズドモードか判定する
+ * @returns サービスがクローズドモードか
+ */
+export function isClosedMode(): boolean {
+  // 許可されたメールアドレスのリストを取得
+  const allowedEmails = process.env.ALLOWED_EMAILS?.split(",") || [];
+
+  return allowedEmails.length > 0;
+}
+
+/**
+ * メールアドレスが許可リストに存在するか検証する（オフラインモードは常に許可）
+ * @param {string} email メールアドレス
+ * @returns {boolean} メールアドレスが有効か
+ */
+export function isAllowedEmail(email: string): boolean {
+  const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
+
+  if (offlineMode) {
+    return true;
+  }
+
+  // 許可されたメールアドレスのリストを取得
+  const allowedEmails = process.env.ALLOWED_EMAILS?.split(",") || [];
+
+  // メールアドレスが許可されているか確認
+  const isAllowed = allowedEmails.length === 0 || allowedEmails.includes(email);
+
+  return isAllowed;
+}

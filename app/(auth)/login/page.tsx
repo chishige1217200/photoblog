@@ -1,5 +1,5 @@
 import { signIn } from "@/auth";
-import { getUserSession } from "@/lib/sessionManager";
+import { getUserSession, isClosedMode } from "@/lib/sessionManager";
 import { AuroraText } from "@/components/ui/aurora-text";
 import {
   Card,
@@ -16,12 +16,11 @@ import Link from "next/link";
 export default async function Home() {
   const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
   const session = await getUserSession();
+  const closedMode = isClosedMode();
 
   return (
     <>
-      {session !== null ? (
-        <></>
-      ) : (
+      {session == null && (
         <div className="flex flex-col justify-center items-center min-h-screen py-2 space-y-4">
           <Card className="relative w-full max-w-[350px] overflow-hidden items-center">
             <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
@@ -30,6 +29,11 @@ export default async function Home() {
               <CardTitle className="text-3xl font-bold tracking-tighter">
                 <AuroraText>PhotoBlog</AuroraText>
               </CardTitle>
+              {closedMode && (
+                <div className="text-xl font-bold tracking-tighter text-center">
+                  Closed Mode
+                </div>
+              )}
             </CardContent>
             <CardContent>
               <div>続行することにより、</div>
