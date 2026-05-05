@@ -1,5 +1,5 @@
 import { getUserSession } from "@/lib/sessionManager";
-import { CmsBook, convertToBook } from "@/types/microCMS/book";
+import { CmsPhoto, convertToPhoto, isOwner } from "@/types/microCMS/photo";
 import { NextRequest } from "next/server";
 
 export async function GET(
@@ -33,10 +33,16 @@ export async function GET(
     return new Response("Failed to fetch photo data", { status: res.status });
   }
 
-  const data = (await res.json()) as CmsBook;
+  const data = (await res.json()) as CmsPhoto;
   console.log(data);
 
-  const response = convertToBook(data, session.user?.email ?? "");
+  if (!isOwner(data, session.user?.email || undefined)) {
+    return new Response("You don't have permission to perform this action", {
+      status: 403,
+    });
+  }
+
+  const response = convertToPhoto(data, session.user?.email ?? "");
 
   return Response.json(response);
 }
