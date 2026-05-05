@@ -59,7 +59,7 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
       flipRef.current?.destroy();
       flipRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, photos, width, height]);
 
   return (
@@ -105,8 +105,12 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
               </div>
 
               <div className="info-area font-medium text-zinc-950 dark:text-zinc-50">
-                {photo.title && <h3>{photo.title}</h3>}
-                {photo.caption && <p>{photo.caption}</p>}
+                {photo.title && (
+                  <h3 className="text-gray-900">{photo.title}</h3>
+                )}
+                {photo.caption && (
+                  <p className="text-gray-900">{photo.caption}</p>
+                )}
                 {photo.shotAt && (
                   <p className="shotAt">📅 {formatDate(photo.shotAt)}</p>
                 )}
