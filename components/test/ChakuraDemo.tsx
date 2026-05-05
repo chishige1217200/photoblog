@@ -35,8 +35,8 @@ import { Lens } from "../ui/lens";
 
 export default function PhotoForm() {
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [description, setDescription] = useState("");
+  const [shotAt, setDate] = useState("");
+  const [caption, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(true);
   const [viewers, setViewers] = useState<string[]>([]);
   const [editors, setEditors] = useState<string[]>([]);
@@ -54,12 +54,12 @@ export default function PhotoForm() {
     const formData = new FormData();
 
     formData.append("title", title);
-    formData.append("date", date);
-    formData.append("description", description);
-    formData.append("isPrivate", String(isPrivate));
+    formData.append("shotAt", shotAt);
+    formData.append("caption", caption);
+    // formData.append("isPrivate", String(isPrivate));
 
-    viewers.forEach((v) => formData.append("viewers[]", v));
-    editors.forEach((v) => formData.append("editors[]", v));
+    // viewers.forEach((v) => formData.append("viewers[]", v));
+    // editors.forEach((v) => formData.append("editors[]", v));
 
     if (file) {
       formData.append("file", file);
@@ -78,21 +78,21 @@ export default function PhotoForm() {
 
     console.log("Form submitted");
 
-    // try {
-    //   const res = await fetch("/api/photos", {
-    //     method: "POST",
-    //     body: formData,
-    //   });
+    try {
+      const res = await fetch("/api/photo/create", {
+        method: "POST",
+        body: formData,
+      });
 
-    //   if (res.ok) {
-    //     alert("送信に成功しました！");
-    //   } else {
-    //     alert("送信に失敗しました");
-    //   }
-    // } catch (err) {
-    //   console.error(err);
-    //   alert("エラーが発生しました");
-    // }
+      if (res.ok) {
+        alert("送信に成功しました！");
+      } else {
+        alert("送信に失敗しました");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("エラーが発生しました");
+    }
   };
 
   return (
@@ -121,7 +121,7 @@ export default function PhotoForm() {
               <Input
                 type="datetime-local"
                 flex="1"
-                value={date}
+                value={shotAt}
                 onChange={(e) => setDate(e.target.value)}
               />
             </Field.Root>
@@ -131,7 +131,7 @@ export default function PhotoForm() {
               <Textarea
                 placeholder="説明を入力してください。"
                 flex="1"
-                value={description}
+                value={caption}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </Field.Root>

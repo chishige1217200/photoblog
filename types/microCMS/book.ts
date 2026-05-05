@@ -1,4 +1,5 @@
 import { Book, Books } from "../PhotoBlog/book";
+import { CmsImage } from "./image";
 import { CmsPhoto, convertToPhoto } from "./photo";
 
 export type CmsBook = {
@@ -10,6 +11,7 @@ export type CmsBook = {
   title?: string;
   subTitle?: string;
   author?: string;
+  thumbnail?: CmsImage;
   photographs?: CmsPhoto[];
   isPrivate?: boolean;
   allowUserIds?: string;

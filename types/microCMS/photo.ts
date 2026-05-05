@@ -1,4 +1,14 @@
 import { Photo, Photos } from "../PhotoBlog/photo";
+import { CmsImage } from "./image";
+
+export type RegistCmsPhoto = {
+  id?: string;
+  photograph?: string;
+  title?: string;
+  caption?: string;
+  shotAt?: string;
+  ownerUserId?: string;
+};
 
 export type CmsPhoto = {
   id: string;
@@ -6,11 +16,7 @@ export type CmsPhoto = {
   updatedAt?: string;
   publishedAt?: string;
   revisedAt?: string;
-  photograph?: {
-    url: string;
-    height: number;
-    width: number;
-  };
+  photograph?: CmsImage;
   title?: string;
   caption?: string;
   shotAt?: string;

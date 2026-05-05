@@ -1,14 +1,12 @@
+import { CmsImage } from "../microCMS/image";
+
 export type Photo = {
   id: string;
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
   revisedAt?: string;
-  photograph?: {
-    url: string;
-    height: number;
-    width: number;
-  };
+  photograph?: CmsImage;
   title?: string;
   caption?: string;
   shotAt?: string;
