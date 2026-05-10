@@ -1,5 +1,6 @@
 "use client";
 import "@/styles/bookshelf.css";
+import { AbsoluteCenter, Box, Center, Text } from "@chakra-ui/react";
 import Link from "next/link";
 
 type Book = {
@@ -19,8 +20,18 @@ const books: Book[] = [
 export default function Bookshelf() {
   return (
     <div className="bookshelf">
+      <Link href={`/book/edit`} className="book-item">
+        <div className="book">
+          <Box position="relative" h="100%">
+            <AbsoluteCenter>
+              <Text textStyle="6xl">+</Text>
+            </AbsoluteCenter>
+          </Box>
+        </div>
+        <p className="title">New Book</p>
+      </Link>
       {books.map((book) => (
-        <Link key={book.id} href={`/books/${book.id}`} className="book-item">
+        <Link key={book.id} href={`/book/${book.id}`} className="book-item">
           <div className="book">
             <img src={book.image} alt={book.title} />
           </div>
