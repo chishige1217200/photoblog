@@ -2,13 +2,13 @@ import { getUserSession } from "@/lib/sessionManager";
 import {
   CmsBook,
   convertToBook,
-  isAllowedUser,
+  isCollaborator,
 } from "@/types/microCMS/book";
 import { NextRequest } from "next/server";
 
 export async function GET(
   _req: NextRequest,
-  ctx: RouteContext<"/api/book/search/[id]">,
+  ctx: RouteContext<"/api/book/search/raw/[id]">,
 ) {
   const session = await getUserSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
@@ -39,14 +39,12 @@ export async function GET(
 
   const data = (await res.json()) as CmsBook;
 
-  // 限定公開の場合、閲覧可能ユーザのみレスポンスを返す
-  if (data.isPrivate && !isAllowedUser(data, session.user?.email ?? "")) {
+  // 編集可能ユーザのみレスポンスを返す
+  if (!isCollaborator(data, session.user?.email ?? "")) {
     return new Response("You don't have permission to perform this action", {
       status: 403,
     });
   }
 
-  const response = convertToBook(data, session.user?.email ?? "");
-
-  return Response.json(response);
+  return Response.json(data);
 }
