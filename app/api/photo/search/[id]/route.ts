@@ -34,7 +34,6 @@ export async function GET(
   }
 
   const data = (await res.json()) as CmsPhoto;
-  console.log(data);
 
   if (!isOwner(data, session.user?.email || undefined)) {
     return new Response("You don't have permission to perform this action", {

@@ -2,7 +2,7 @@ import { getUserSession } from "@/lib/sessionManager";
 import { CmsPhotos, convertToPhotos } from "@/types/microCMS/photo";
 import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await getUserSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
   if (!process.env.MICROCMS_SERVICE_DOMAIN)
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!process.env.MICROCMS_API_KEY)
     return new Response("MICROCMS_API_KEY is required", { status: 500 });
 
-  const searchParams = request.nextUrl.searchParams;
+  const searchParams = _req.nextUrl.searchParams;
   const limit = (searchParams.get("limit") as string) || undefined;
   const offset = (searchParams.get("offset") as string) || undefined;
 
@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
   }
 
   const data = (await res.json()) as CmsPhotos;
-  console.log(data);
 
   const response = convertToPhotos(data, session.user?.email ?? "");
 
