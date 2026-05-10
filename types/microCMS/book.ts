@@ -40,22 +40,33 @@ export const convertFromList = (userIdList: string[]): string => {
   return userIdList.join(",");
 };
 
-export const isOwner = (book: CmsBook, ownerUserId: string): boolean => {
+const isOwner = (book: CmsBook, ownerUserId: string): boolean => {
   return ownerUserId !== undefined && book.ownerUserId === ownerUserId;
 };
 
 export const isCollaborator = (book: CmsBook, userId: string): boolean => {
+  // 共同編集者メールアドレスが未設定の場合
   if (!userId || !book.collaborateUserIds) {
     return false;
   }
-  return convertToList(book.collaborateUserIds).includes(userId);
+
+  // 共同編集者か作成者か
+  return (
+    convertToList(book.collaborateUserIds).includes(userId) ||
+    isOwner(book, userId)
+  );
 };
 
 export const isAllowedUser = (book: CmsBook, userId: string): boolean => {
+  // 限定公開者メールアドレスが未設定の場合
   if (!userId || !book.allowUserIds) {
     return false;
   }
-  return convertToList(book.allowUserIds).includes(userId);
+
+  // 限定公開者か作成者か
+  return (
+    convertToList(book.allowUserIds).includes(userId) || isOwner(book, userId)
+  );
 };
 
 export const convertToBook = (book: CmsBook, userId: string): Book => {
@@ -77,10 +88,7 @@ export const convertToBook = (book: CmsBook, userId: string): Book => {
   };
 };
 
-export const convertToBooks = (
-  cmsBooks: CmsBooks,
-  userId: string,
-): Books => {
+export const convertToBooks = (cmsBooks: CmsBooks, userId: string): Books => {
   return {
     contents: cmsBooks.contents.map((book) => convertToBook(book, userId)),
     totalCount: cmsBooks.totalCount,
