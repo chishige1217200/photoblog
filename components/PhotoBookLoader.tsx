@@ -13,7 +13,7 @@ export default function PhotoBookLoader() {
   const [photos, setPhotos] = useState<Photos | null>(null);
 
   const fetchPhotos = async () => {
-    const response = await fetch("/api/photo/search");
+    const response = await fetch("/api/photo/search?limit=100");
     const photos = (await response.json()) as Photos;
     setPhotos(photos);
   };

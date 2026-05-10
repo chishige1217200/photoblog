@@ -74,7 +74,7 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
     >
       <div className="page" data-density="hard">
         <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
-          <h2 className="text-center text-5xl">Page Cover</h2>
+          <h2 className="text-center text-5xl text-gray-900">Page Cover</h2>
         </div>
       </div>
       {photos.map((photo) => {
