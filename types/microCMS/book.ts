@@ -45,28 +45,33 @@ export const isOwner = (book: CmsBook, ownerUserId: string): boolean => {
 };
 
 export const isCollaborator = (book: CmsBook, userId: string): boolean => {
+  // 作成者本人は常に許可する
+  if (isOwner(book, userId)) {
+    return true;
+  }
+
   // 共同編集者メールアドレスが未設定の場合
   if (!userId || !book.collaborateUserIds) {
     return false;
   }
 
-  // 共同編集者か作成者か
-  return (
-    convertToList(book.collaborateUserIds).includes(userId) ||
-    isOwner(book, userId)
-  );
+  // 共同編集者か
+  return convertToList(book.collaborateUserIds).includes(userId);
 };
 
 export const isAllowedUser = (book: CmsBook, userId: string): boolean => {
+  // 作成者本人は常に許可する
+  if (isOwner(book, userId)) {
+    return true;
+  }
+
   // 限定公開者メールアドレスが未設定の場合
   if (!userId || !book.allowUserIds) {
     return false;
   }
 
-  // 限定公開者か作成者か
-  return (
-    convertToList(book.allowUserIds).includes(userId) || isOwner(book, userId)
-  );
+  // 限定公開者か
+  return convertToList(book.allowUserIds).includes(userId);
 };
 
 export const convertToBook = (book: CmsBook, userId: string): Book => {
