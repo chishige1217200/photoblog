@@ -40,7 +40,7 @@ export const convertFromList = (userIdList: string[]): string => {
   return userIdList.join(",");
 };
 
-const isOwner = (book: CmsBook, ownerUserId: string): boolean => {
+export const isOwner = (book: CmsBook, ownerUserId: string): boolean => {
   return ownerUserId !== undefined && book.ownerUserId === ownerUserId;
 };
 

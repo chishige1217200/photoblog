@@ -4,6 +4,7 @@ import { Book } from "@/types/PhotoBlog/book";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, HStack } from "@chakra-ui/react";
 import BookPhotoForm from "./BookPhotoForm";
@@ -18,16 +19,55 @@ type Props = {
 };
 
 export default function BookView({ id }: Props) {
+  const router = useRouter();
   const [book, setBook] = useState<Book | null>(null);
   const [error, setError] = useState(false);
   const [showPhotoForm, setShowPhotoForm] = useState(false);
   const [showDeleteMode, setShowDeleteMode] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [deletingBook, setDeletingBook] = useState(false);
 
   const refreshBook = async () => {
     const res = await fetch(`/api/book/search/${id}`);
     if (res.ok) {
       setBook((await res.json()) as Book);
+    }
+  };
+
+  const handleDeleteBook = async () => {
+    if (!window.confirm("このブックを削除しますか？\n（ブック内のフォトはフォトボードに残ります）")) {
+      return;
+    }
+    setDeletingBook(true);
+    try {
+      const res = await fetch(`/api/book/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toaster.create({
+          title: "ブックを削除しました",
+          type: "success",
+          closable: true,
+        });
+        router.push("/book");
+      } else {
+        const error = await res.text();
+        toaster.create({
+          title: "削除に失敗しました",
+          description: error,
+          type: "error",
+          closable: true,
+        });
+        setDeletingBook(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toaster.create({
+        title: "エラーが発生しました",
+        type: "error",
+        closable: true,
+      });
+      setDeletingBook(false);
     }
   };
 
@@ -135,6 +175,17 @@ export default function BookView({ id }: Props) {
                 onClick={() => setShowDeleteMode((v) => !v)}
               >
                 {showDeleteMode ? "削除モードを終了" : "フォトを削除"}
+              </Button>
+            )}
+            {book.isOwner && (
+              <Button
+                size="sm"
+                variant="outline"
+                colorPalette="red"
+                loading={deletingBook}
+                onClick={handleDeleteBook}
+              >
+                ブックを削除
               </Button>
             )}
           </HStack>
