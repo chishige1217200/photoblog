@@ -84,6 +84,7 @@ export const convertToBook = (book: CmsBook, userId: string): Book => {
     title: book.title,
     subTitle: book.subTitle,
     author: book.author,
+    thumbnail: book.thumbnail,
     photographs:
       book.photographs?.map((photo) => convertToPhoto(photo, userId)) || [],
     isPrivate: book.isPrivate,

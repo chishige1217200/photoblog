@@ -3,10 +3,12 @@ import "@/styles/pageflip.css";
 import React, { useEffect, useRef, useState } from "react";
 import { PageFlip, SizeType } from "page-flip";
 import { Photo } from "@/types/PhotoBlog/photo";
+import { Book } from "@/types/PhotoBlog/book";
 import Image from "next/image";
 
 type Props = {
   photos: Photo[];
+  book?: Book;
   width?: number;
   height?: number;
 };
@@ -19,7 +21,12 @@ const formatDate = (dateStr?: string) => {
   ).padStart(2, "0")}`;
 };
 
-const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
+const PhotoBook: React.FC<Props> = ({
+  photos,
+  book,
+  width = 450,
+  height = 650,
+}) => {
   const [loading, setLoading] = useState<boolean>(true);
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
@@ -62,6 +69,41 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, photos, width, height]);
 
+  const renderCover = () => (
+    <div className="page" data-density="hard">
+      <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
+        {book?.thumbnail?.url ? (
+          <div className="image-area">
+            <Image
+              src={book.thumbnail.url}
+              alt={book.title ?? ""}
+              width={book.thumbnail.width}
+              height={book.thumbnail.height}
+              loading="eager"
+            />
+          </div>
+        ) : (
+          <h2 className="text-center text-5xl text-gray-900">Page Cover</h2>
+        )}
+        {book?.title && (
+          <h3 className="mt-4 text-center text-2xl text-gray-900">
+            {book.title}
+          </h3>
+        )}
+        {book?.subTitle && (
+          <p className="mt-2 text-center text-lg text-gray-700">
+            {book.subTitle}
+          </p>
+        )}
+        {book?.author && (
+          <p className="mt-2 text-center text-sm text-gray-500">
+            著者: {book.author}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div
       ref={bookRef}
@@ -72,11 +114,7 @@ const PhotoBook: React.FC<Props> = ({ photos, width = 450, height = 650 }) => {
         visibility: loading ? "hidden" : "visible",
       }}
     >
-      <div className="page" data-density="hard">
-        <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
-          <h2 className="text-center text-5xl text-gray-900">Page Cover</h2>
-        </div>
-      </div>
+      {renderCover()}
       {photos.map((photo) => {
         const isPortrait =
           photo.photograph && photo.photograph.height > photo.photograph.width;

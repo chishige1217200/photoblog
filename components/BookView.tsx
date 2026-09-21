@@ -141,17 +141,6 @@ export default function BookView({ id }: Props) {
   return (
     <div className="flex flex-col items-center p-4">
       <div className="mb-4 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">{book.title}</h1>
-        {book.subTitle && (
-          <p className="text-lg text-zinc-600 dark:text-zinc-400">
-            {book.subTitle}
-          </p>
-        )}
-        {book.author && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            著者: {book.author}
-          </p>
-        )}
         {(book.isOwner || book.isCollaborator) && (
           <HStack gap="2" mt="2">
             <Link
@@ -245,6 +234,7 @@ export default function BookView({ id }: Props) {
       {book.photographs && book.photographs.length > 0 ? (
         <PhotoBook
           photos={book.photographs}
+          book={book}
           width={(width - 32) / 2}
           height={height - 32}
         />
