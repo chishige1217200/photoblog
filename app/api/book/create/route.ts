@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     subTitle,
     author,
     thumbnail: uploadResData.url,
+    photographs: [],
     isPrivate,
     allowUserIds: convertFromList(viewers),
     collaborateUserIds: convertFromList(editors),

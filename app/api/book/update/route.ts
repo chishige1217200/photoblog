@@ -24,10 +24,9 @@ export async function POST(req: Request) {
 
   const title: string | undefined =
     (formData.get("title") as string) || undefined;
-  const subTitle: string | undefined =
-    (formData.get("subTitle") as string) || undefined;
-  const author: string | undefined =
-    (formData.get("author") as string) || undefined;
+  // 空欄でも明示的に送信し、クリアできるようにする
+  const subTitle: string = (formData.get("subTitle") as string | null) ?? "";
+  const author: string = (formData.get("author") as string | null) ?? "";
   const isPrivate = formData.get("isPrivate") === "true";
   const viewers = formData.getAll("viewers") as string[];
   const editors = formData.getAll("editors") as string[];
@@ -95,6 +94,7 @@ export async function POST(req: Request) {
     subTitle,
     author,
     thumbnail,
+    photographs: existingBook.photographs,
     isPrivate,
     allowUserIds: convertFromList(viewers),
     collaborateUserIds: convertFromList(editors),

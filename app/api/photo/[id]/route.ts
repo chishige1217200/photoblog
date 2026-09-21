@@ -42,18 +42,17 @@ export async function PATCH(
   // FormDataの読み取り
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
-  const title: string | undefined =
-    (formData.get("title") as string) || undefined;
-  const caption: string | undefined =
-    (formData.get("caption") as string) || undefined;
-  const shotAt: string | undefined =
-    (formData.get("shotAt") as string) || undefined;
+  // 空欄でも明示的に送信し、クリアできるようにする
+  const title: string = (formData.get("title") as string | null) ?? "";
+  const caption: string = (formData.get("caption") as string | null) ?? "";
+  const shotAt: string = (formData.get("shotAt") as string | null) ?? "";
 
-  // 更新対象フィールドを構築
-  const updateData: Record<string, unknown> = {};
-  if (title !== undefined) updateData.title = title;
-  if (caption !== undefined) updateData.caption = caption;
-  if (shotAt !== undefined) updateData.shotAt = shotAt;
+  // 更新対象フィールドを構築（空欄でも送信してクリアする）
+  const updateData: Record<string, unknown> = {
+    title,
+    caption,
+    shotAt,
+  };
 
   // 画像が更新された場合のみアップロード
   if (file) {

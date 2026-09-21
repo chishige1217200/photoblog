@@ -62,9 +62,10 @@ export default function PhotoEditor({ id }: Props) {
     if (file) {
       formData.append("file", file);
     }
-    if (title) formData.append("title", title);
-    if (caption) formData.append("caption", caption);
-    if (shotAt) formData.append("shotAt", shotAt);
+    // 空欄でも明示的に送信し、クリアできるようにする
+    formData.append("title", title);
+    formData.append("caption", caption);
+    formData.append("shotAt", shotAt);
 
     setLoading(true);
     try {
