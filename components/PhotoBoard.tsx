@@ -1,7 +1,8 @@
 "use client";
 import "@/styles/photoboard.css";
-import { Button } from "@chakra-ui/react";
+import { Button, HStack } from "@chakra-ui/react";
 import { Photo } from "@/types/PhotoBlog/photo";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toaster } from "./ui/toaster";
 
@@ -76,16 +77,23 @@ export default function PhotoBoard() {
             </div>
             <p className="title">{photo.title ?? "無題"}</p>
             {photo.isOwner && (
-              <Button
-                size="xs"
-                colorPalette="red"
-                variant="outline"
-                mt="2"
-                loading={deletingPhotoId === photo.id}
-                onClick={() => handleDeletePhoto(photo.id)}
-              >
-                削除
-              </Button>
+              <HStack gap="2" mt="2">
+                <Link
+                  href={`/photo/edit/${photo.id}`}
+                  className="inline-block rounded-full border border-zinc-300 px-3 py-1 text-xs transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                >
+                  編集
+                </Link>
+                <Button
+                  size="xs"
+                  colorPalette="red"
+                  variant="outline"
+                  loading={deletingPhotoId === photo.id}
+                  onClick={() => handleDeletePhoto(photo.id)}
+                >
+                  削除
+                </Button>
+              </HStack>
             )}
           </div>
         ))
