@@ -2,10 +2,12 @@
 import { GetWindowSize } from "@/hook/GetWindowSize";
 import { Book } from "@/types/PhotoBlog/book";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button, HStack } from "@chakra-ui/react";
 import BookPhotoForm from "./BookPhotoForm";
+import { toaster } from "./ui/toaster";
 
 const PhotoBook = dynamic(() => import("./PhotoBook"), {
   ssr: false,
@@ -19,11 +21,50 @@ export default function BookView({ id }: Props) {
   const [book, setBook] = useState<Book | null>(null);
   const [error, setError] = useState(false);
   const [showPhotoForm, setShowPhotoForm] = useState(false);
+  const [showDeleteMode, setShowDeleteMode] = useState(false);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
 
   const refreshBook = async () => {
     const res = await fetch(`/api/book/search/${id}`);
     if (res.ok) {
       setBook((await res.json()) as Book);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!window.confirm("このフォトをブックから削除しますか？")) {
+      return;
+    }
+    setDeletingPhotoId(photoId);
+    try {
+      const res = await fetch(`/api/book/${id}/photo/${photoId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toaster.create({
+          title: "フォトを削除しました",
+          type: "success",
+          closable: true,
+        });
+        await refreshBook();
+      } else {
+        const error = await res.text();
+        toaster.create({
+          title: "削除に失敗しました",
+          description: error,
+          type: "error",
+          closable: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toaster.create({
+        title: "エラーが発生しました",
+        type: "error",
+        closable: true,
+      });
+    } finally {
+      setDeletingPhotoId(null);
     }
   };
 
@@ -86,6 +127,16 @@ export default function BookView({ id }: Props) {
             >
               {showPhotoForm ? "フォト追加を閉じる" : "フォトを追加"}
             </Button>
+            {book.photographs && book.photographs.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                colorPalette="red"
+                onClick={() => setShowDeleteMode((v) => !v)}
+              >
+                {showDeleteMode ? "削除モードを終了" : "フォトを削除"}
+              </Button>
+            )}
           </HStack>
         )}
       </div>
@@ -94,6 +145,52 @@ export default function BookView({ id }: Props) {
           <BookPhotoForm bookId={id} onUploaded={refreshBook} />
         </div>
       )}
+      {showDeleteMode &&
+        (book.isOwner || book.isCollaborator) &&
+        book.photographs &&
+        book.photographs.length > 0 && (
+          <div className="mb-4 w-full max-w-3xl">
+            <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+              削除したいフォトを選択してください。
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {book.photographs.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+                >
+                  {photo.photograph?.url ? (
+                    <Image
+                      src={photo.photograph.url}
+                      alt={photo.title ?? ""}
+                      width={photo.photograph.width}
+                      height={photo.photograph.height}
+                      className="aspect-square w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex aspect-square items-center justify-center bg-zinc-100 text-2xl dark:bg-zinc-800">
+                      ?
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-black/50 px-2 py-1">
+                    <p className="truncate text-xs text-white">
+                      {photo.title ?? "無題"}
+                    </p>
+                  </div>
+                  <Button
+                    size="xs"
+                    colorPalette="red"
+                    className="absolute right-1 top-1"
+                    loading={deletingPhotoId === photo.id}
+                    onClick={() => handleDeletePhoto(photo.id)}
+                  >
+                    削除
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       {book.photographs && book.photographs.length > 0 ? (
         <PhotoBook
           photos={book.photographs}

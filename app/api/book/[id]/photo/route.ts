@@ -87,44 +87,43 @@ export async function POST(
   const uploadResData = (await uploadRes.json()) as { url: string };
   console.log("Upload success: ", uploadResData.url);
 
-  // 新規フォトを構築（システムフィールドはmicroCMSが自動生成するため除外）
-  const newPhoto = {
-    photograph: {
-      url: uploadResData.url,
-      height: metadata.height ?? 0,
-      width: metadata.width ?? 0,
-    },
+  // photoAPIでフォトコンテンツを登録（photographsはphotoへの複数コンテンツ参照）
+  const photoData = {
+    photograph: uploadResData.url,
     title,
     caption,
     shotAt,
     ownerUserId: session.user?.email,
   };
 
-  // 既存のphotographs配列に追加（システムフィールドを除外してコンテンツフィールドのみを送信）
-  const photographs = [
-    ...(existingBook.photographs ?? []).map((photo) => ({
-      photograph: photo.photograph,
-      title: photo.title,
-      caption: photo.caption,
-      shotAt: photo.shotAt,
-      ownerUserId: photo.ownerUserId,
-    })),
-    newPhoto,
-  ];
+  const photoRes = await fetch(
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo`,
+    {
+      method: "POST",
+      headers: {
+        "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(photoData),
+    },
+  );
 
-  // コンテンツフィールドのみを送信（システムフィールドは除外）
-  const bookData = {
-    title: existingBook.title,
-    subTitle: existingBook.subTitle,
-    author: existingBook.author,
-    thumbnail: existingBook.thumbnail,
-    photographs,
-    isPrivate: existingBook.isPrivate,
-    allowUserIds: existingBook.allowUserIds,
-    collaborateUserIds: existingBook.collaborateUserIds,
-    ownerUserId: existingBook.ownerUserId,
-  };
+  if (!photoRes.ok) {
+    const error = await photoRes.text();
+    console.error("Photo registration error:", error);
+    return new Response(error, { status: photoRes.status });
+  }
 
+  const photoResData = (await photoRes.json()) as { id: string };
+  console.log("Photo registration successful: ", photoResData.id);
+
+  // 既存のphotographs（フォトID配列）に新フォトIDを追加
+  const existingPhotoIds = (existingBook.photographs ?? []).map(
+    (photo) => photo.id,
+  );
+  const photographs = [...existingPhotoIds, photoResData.id];
+
+  // photographsのみを更新（複数コンテンツ参照は参照先コンテンツのID配列で指定）
   const res = await fetch(
     `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/book/${id}`,
     {
@@ -133,7 +132,7 @@ export async function POST(
         "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(bookData),
+      body: JSON.stringify({ photographs }),
     },
   );
 
