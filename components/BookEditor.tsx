@@ -3,7 +3,6 @@
 import {
   VStack,
   Input,
-  Textarea,
   Button,
   Switch,
   Field,
@@ -16,15 +15,17 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { HiUpload } from "react-icons/hi";
+import { useRouter } from "next/navigation";
 import { toaster } from "./ui/toaster";
 import { Lens } from "./ui/lens";
-import { Book } from "@/types/PhotoBlog/book";
+import { CmsBook, convertToList } from "@/types/microCMS/book";
 
 export type BookEditorProps = {
   id?: string;
 };
 
 export default function BookEditor({ id }: BookEditorProps) {
+  const router = useRouter();
   const [hasError, setHasError] = useState(false);
   const [title, setTitle] = useState("");
   const [subTitle, setSubTitle] = useState("");
@@ -34,58 +35,112 @@ export default function BookEditor({ id }: BookEditorProps) {
   const [editors, setEditors] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const searchBook = async (id: string) => {
-    const res = await fetch(`/api/book/search/${id}`);
-    const data: Book = await res.json();
+  const loadBook = async (bookId: string) => {
+    try {
+      const res = await fetch(`/api/book/search/raw/${bookId}`);
+      if (!res.ok) {
+        setHasError(true);
+        return;
+      }
+      const data: CmsBook = await res.json();
+      setTitle(data.title ?? "");
+      setSubTitle(data.subTitle ?? "");
+      setAuthor(data.author ?? "");
+      setIsPrivate(data.isPrivate ?? true);
+      setViewers(convertToList(data.allowUserIds));
+      setEditors(convertToList(data.collaborateUserIds));
+      if (data.thumbnail?.url) {
+        setPreviewImage(data.thumbnail.url);
+      }
+    } catch (err) {
+      console.error(err);
+      setHasError(true);
+    }
   };
 
   useEffect(() => {
     if (id) {
+      loadBook(id);
     }
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!title) {
+      toaster.create({
+        title: "エラー",
+        description: "タイトルを入力してください。",
+        type: "error",
+        closable: true,
+      });
+      return;
+    }
+    if (!file && !id) {
+      toaster.create({
+        title: "エラー",
+        description: "サムネイルのフォトを選択してください。",
+        type: "error",
+        closable: true,
+      });
+      return;
+    }
+
     const formData = new FormData();
-
-    // formData.append("isPrivate", String(isPrivate));
-
-    // viewers.forEach((v) => formData.append("viewers[]", v));
-    // editors.forEach((v) => formData.append("editors[]", v));
-
+    formData.append("title", title);
+    formData.append("subTitle", subTitle);
+    formData.append("author", author);
+    formData.append("isPrivate", String(isPrivate));
+    viewers.forEach((v) => formData.append("viewers", v));
+    editors.forEach((v) => formData.append("editors", v));
     if (file) {
       formData.append("file", file);
     }
 
-    console.log("Form Data:");
-    for (const pair of formData.entries()) {
-      console.log(`  ${pair[0]}: ${pair[1]}`);
+    const endpoint = id ? "/api/book/update" : "/api/book/create";
+    if (id) {
+      formData.append("id", id);
     }
 
-    toaster.create({
-      description: "File saved successfully",
-      type: "success",
-      closable: true,
-    });
-
-    console.log("Form submitted");
-
+    setLoading(true);
     try {
-      const res = await fetch("/api/photo/create", {
+      const res = await fetch(endpoint, {
         method: "POST",
         body: formData,
       });
 
       if (res.ok) {
-        alert("送信に成功しました！");
+        const data = await res.json();
+        toaster.create({
+          title: id ? "更新に成功しました" : "登録に成功しました",
+          type: "success",
+          closable: true,
+        });
+        if (id) {
+          router.push(`/book/${id}`);
+        } else {
+          router.push(`/book/${data.id}`);
+        }
       } else {
-        alert("送信に失敗しました");
+        const error = await res.text();
+        toaster.create({
+          title: "送信に失敗しました",
+          description: error,
+          type: "error",
+          closable: true,
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("エラーが発生しました");
+      toaster.create({
+        title: "エラーが発生しました",
+        type: "error",
+        closable: true,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -243,7 +298,7 @@ export default function BookEditor({ id }: BookEditorProps) {
               css={{ "--field-label-width": "96px" }}
               style={{ padding: 20 }}
             >
-              <Button colorScheme="blue" type="submit">
+              <Button colorScheme="blue" type="submit" loading={loading}>
                 {id ? "更新" : "登録"}
               </Button>
             </VStack>

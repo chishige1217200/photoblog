@@ -19,7 +19,6 @@ export default function PhotoBookLoader() {
   };
 
   const { width, height } = GetWindowSize();
-  console.log(width, height);
 
   useEffect(() => {
     if (!initializeFlag) {

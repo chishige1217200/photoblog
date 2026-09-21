@@ -1,30 +1,42 @@
 "use client";
 import "@/styles/photoboard.css";
-import Link from "next/link";
-
-type Photo = {
-  id: number;
-  image: string;
-};
-
-const books: Photo[] = [
-  { id: 1,  image: "https://picsum.photos/200/300?1" },
-  { id: 2,  image: "https://picsum.photos/200/300?2" },
-  { id: 3,  image: "https://picsum.photos/200/300?3" },
-  { id: 4,  image: "https://picsum.photos/200/300?4" },
-  { id: 5,  image: "https://picsum.photos/200/300?5" },
-];
+import { Photo } from "@/types/PhotoBlog/photo";
+import { useEffect, useState } from "react";
 
 export default function PhotoBoard() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      const res = await fetch("/api/photo/search?limit=100");
+      if (res.ok) {
+        const data = (await res.json()) as { contents: Photo[] };
+        setPhotos(data.contents);
+      }
+      setLoading(false);
+    };
+    fetchPhotos();
+  }, []);
+
   return (
     <div className="bookshelf">
-      {books.map((book) => (
-        <Link key={book.id} href={`/books/${book.id}`} className="book-item">
-          <div className="book">
-            <img src={book.image} />
+      {loading ? (
+        <p className="title">読み込み中...</p>
+      ) : (
+        photos.map((photo) => (
+          <div key={photo.id} className="book-item">
+            <div className="book">
+              {photo.photograph?.url ? (
+                <img src={photo.photograph.url} alt={photo.title ?? ""} />
+              ) : (
+                <div className="book" />
+              )}
+            </div>
+            <p className="title">{photo.title ?? "無題"}</p>
           </div>
-        </Link>
-      ))}
+        ))
+      )}
     </div>
   );
 }
