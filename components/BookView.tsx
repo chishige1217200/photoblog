@@ -4,6 +4,8 @@ import { Book } from "@/types/PhotoBlog/book";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Button, HStack } from "@chakra-ui/react";
+import BookPhotoForm from "./BookPhotoForm";
 
 const PhotoBook = dynamic(() => import("./PhotoBook"), {
   ssr: false,
@@ -16,6 +18,14 @@ type Props = {
 export default function BookView({ id }: Props) {
   const [book, setBook] = useState<Book | null>(null);
   const [error, setError] = useState(false);
+  const [showPhotoForm, setShowPhotoForm] = useState(false);
+
+  const refreshBook = async () => {
+    const res = await fetch(`/api/book/search/${id}`);
+    if (res.ok) {
+      setBook((await res.json()) as Book);
+    }
+  };
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -62,14 +72,28 @@ export default function BookView({ id }: Props) {
           </p>
         )}
         {(book.isOwner || book.isCollaborator) && (
-          <Link
-            href={`/book/edit/${id}`}
-            className="mt-2 inline-block rounded-full border border-zinc-300 px-4 py-1 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-          >
-            編集する
-          </Link>
+          <HStack gap="2" mt="2">
+            <Link
+              href={`/book/edit/${id}`}
+              className="inline-block rounded-full border border-zinc-300 px-4 py-1 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            >
+              編集する
+            </Link>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowPhotoForm((v) => !v)}
+            >
+              {showPhotoForm ? "フォト追加を閉じる" : "フォトを追加"}
+            </Button>
+          </HStack>
         )}
       </div>
+      {showPhotoForm && (book.isOwner || book.isCollaborator) && (
+        <div className="mb-4">
+          <BookPhotoForm bookId={id} onUploaded={refreshBook} />
+        </div>
+      )}
       {book.photographs && book.photographs.length > 0 ? (
         <PhotoBook
           photos={book.photographs}
