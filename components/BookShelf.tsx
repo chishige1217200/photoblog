@@ -1,5 +1,4 @@
 "use client";
-// @ts-expect-error CSS side-effect imports may not have declarations in this TypeScript setup.
 import "@/styles/bookshelf.css";
 import { AbsoluteCenter, Box, Text } from "@chakra-ui/react";
 import { Book } from "@/types/PhotoBlog/book";

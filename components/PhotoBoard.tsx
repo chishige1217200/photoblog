@@ -1,5 +1,4 @@
 "use client";
-// @ts-expect-error CSS side-effect imports may not have declarations in this TypeScript setup.
 import "@/styles/photoboard.css";
 import { Button, HStack } from "@chakra-ui/react";
 import { Photo } from "@/types/PhotoBlog/photo";

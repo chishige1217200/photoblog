@@ -1,16 +1,22 @@
-import BackLink from "@/components/BackLink";
-import BookEditor from "@/components/BookEditor";
+import BookWorkspace from "@/components/BookWorkspace";
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string; add?: string }>;
 };
 
-export default async function EditBookPage({ params }: Props) {
+/**
+ * ブック編集・フォト追加・フォト並び替え/削除を統合した画面。
+ * ?tab=photos でフォトタブを開いた状態にする。
+ */
+export default async function EditBookPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { tab, add } = await searchParams;
   return (
-    <>
-      <BackLink href={`/book/${id}`} label="ブック詳細へ戻る" />
-      <BookEditor id={id} />
-    </>
+    <BookWorkspace
+      id={id}
+      initialTab={tab === "photos" ? "photos" : "info"}
+      initialAddOpen={add === "1"}
+    />
   );
 }

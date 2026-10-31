@@ -51,16 +51,21 @@ export default function BookView({ id }: Props) {
   return (
     <div className="flex flex-col items-center p-4">
       <div className="mb-4 text-center">
+        <h1 className="text-2xl font-bold">{book.title ?? "無題"}</h1>
+        {(book.subTitle || book.author) && (
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            {[book.subTitle, book.author].filter(Boolean).join(" / ")}
+          </p>
+        )}
         {(book.isOwner || book.isCollaborator) && (
-          <HStack gap="2" mt="2">
-            <Button asChild size="sm" variant="outline" colorPalette="gray" borderRadius="full">
+          <HStack gap="2" mt="3">
+            <Button asChild size="sm" colorPalette="blue" borderRadius="full">
               <Link href={`/book/edit/${id}`}>編集する</Link>
             </Button>
             <Button asChild size="sm" variant="outline" borderRadius="full">
-              <Link href={`/book/${id}/photo/add`}>フォトを追加</Link>
-            </Button>
-            <Button asChild size="sm" variant="outline" colorPalette="red" borderRadius="full">
-              <Link href={`/book/${id}/manage`}>管理する</Link>
+              <Link href={`/book/edit/${id}?tab=photos&add=1`}>
+                フォトを追加
+              </Link>
             </Button>
           </HStack>
         )}

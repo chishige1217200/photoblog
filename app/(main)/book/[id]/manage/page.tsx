@@ -1,16 +1,11 @@
-import BackLink from "@/components/BackLink";
-import BookManage from "@/components/BookManage";
+import { redirect } from "next/navigation";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
+/** フォト並び替え/削除画面はブック編集画面へ統合されたためリダイレクトする */
 export default async function ManageBookPage({ params }: Props) {
   const { id } = await params;
-  return (
-    <>
-      <BackLink href={`/book/${id}`} label="ブック詳細へ戻る" />
-      <BookManage id={id} />
-    </>
-  );
+  redirect(`/book/${id}/edit?tab=photos`);
 }
