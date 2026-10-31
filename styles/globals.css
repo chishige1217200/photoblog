@@ -1,3 +1,12 @@
+/*
+  Chakra UI v3 は "@layer reset, base, tokens, recipes;" を、Tailwind v4 は
+  "theme, base, components, utilities" を宣言する。CSS の cascade layer は最初に現れた
+  宣言順で決まるため、Tailwind の宣言が先に来ると Chakra の reset レイヤーが utilities
+  より後ろに回り、`* { padding: 0 }` が p-4 / px-4 などを上書きしていた。
+  そこで両者の前後関係を壊さない共通のレイヤー順を先に宣言する。
+*/
+@layer theme, reset, base, tokens, components, recipes, utilities;
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
