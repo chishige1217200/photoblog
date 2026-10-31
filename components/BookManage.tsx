@@ -1,10 +1,12 @@
 "use client";
 
 import { Book } from "@/types/PhotoBlog/book";
+import { Photo } from "@/types/PhotoBlog/photo";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { HiArrowDown, HiArrowUp, HiPencil } from "react-icons/hi";
 import { Button, HStack } from "@chakra-ui/react";
 import { toaster } from "./ui/toaster";
 
@@ -15,9 +17,12 @@ type Props = {
 export default function BookManage({ id }: Props) {
   const router = useRouter();
   const [book, setBook] = useState<Book | null>(null);
+  // 表示・並び替え用のフォト配列（ブックの登録順とは異なる可能性がある）
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [hasError, setHasError] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [deletingBook, setDeletingBook] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const refreshBook = useCallback(async () => {
     const res = await fetch(`/api/book/search/${id}`);
@@ -25,7 +30,9 @@ export default function BookManage({ id }: Props) {
       setHasError(true);
       return;
     }
-    setBook((await res.json()) as Book);
+    const data = (await res.json()) as Book;
+    setBook(data);
+    setPhotos(data.photographs ?? []);
   }, [id]);
 
   useEffect(() => {
@@ -70,6 +77,60 @@ export default function BookManage({ id }: Props) {
         closable: true,
       });
       setDeletingBook(false);
+    }
+  };
+
+  const movePhoto = (index: number, direction: -1 | 1) => {
+    setPhotos((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const isOrderDirty =
+    photos.length > 0 &&
+    (photos.length !== (book?.photographs?.length ?? 0) ||
+      photos.some(
+        (photo, index) => photo.id !== book?.photographs?.[index]?.id,
+      ));
+
+  const handleSaveOrder = async () => {
+    if (!isOrderDirty) return;
+    setSavingOrder(true);
+    try {
+      const res = await fetch(`/api/book/${id}/photo/order`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photographs: photos.map((p) => p.id) }),
+      });
+      if (res.ok) {
+        toaster.create({
+          title: "フォトの順番を保存しました",
+          type: "success",
+          closable: true,
+        });
+        await refreshBook();
+      } else {
+        const error = await res.text();
+        toaster.create({
+          title: "順番の保存に失敗しました",
+          description: error,
+          type: "error",
+          closable: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toaster.create({
+        title: "エラーが発生しました",
+        type: "error",
+        closable: true,
+      });
+    } finally {
+      setSavingOrder(false);
     }
   };
 
@@ -160,13 +221,29 @@ export default function BookManage({ id }: Props) {
         )}
       </HStack>
 
-      {book.photographs && book.photographs.length > 0 ? (
+      {photos.length > 0 ? (
         <div className="w-full max-w-3xl">
-          <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
-            削除したいフォトを選択してください。
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              矢印ボタンで順番を入れ替え、削除や編集ができます。
+            </p>
+            <Button
+              size="sm"
+              colorPalette="blue"
+              disabled={!isOrderDirty}
+              loading={savingOrder}
+              onClick={handleSaveOrder}
+            >
+              順番を保存
+            </Button>
+          </div>
+          {isOrderDirty && (
+            <p className="mb-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+              順番が変更されています。「順番を保存」を押すと反映されます。
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {book.photographs.map((photo) => (
+            {photos.map((photo, index) => (
               <div
                 key={photo.id}
                 className="relative overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
@@ -186,18 +263,52 @@ export default function BookManage({ id }: Props) {
                 )}
                 <div className="absolute inset-x-0 bottom-0 bg-black/50 px-2 py-1">
                   <p className="truncate text-xs text-white">
-                    {photo.title ?? "無題"}
+                    {index + 1}. {photo.title ?? "無題"}
                   </p>
                 </div>
-                <Button
-                  size="xs"
-                  colorPalette="red"
-                  className="absolute right-1 top-1"
-                  loading={deletingPhotoId === photo.id}
-                  onClick={() => handleDeletePhoto(photo.id)}
-                >
-                  削除
-                </Button>
+                <div className="absolute right-1 top-1 flex flex-col gap-1">
+                  <Button
+                    size="xs"
+                    variant="surface"
+                    aria-label="前へ"
+                    disabled={index === 0}
+                    onClick={() => movePhoto(index, -1)}
+                  >
+                    <HiArrowUp />
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="surface"
+                    aria-label="次へ"
+                    disabled={index === photos.length - 1}
+                    onClick={() => movePhoto(index, 1)}
+                  >
+                    <HiArrowDown />
+                  </Button>
+                </div>
+                <div className="absolute left-1 top-1 flex gap-1">
+                  {photo.isOwner && (
+                    <Button
+                      asChild
+                      size="xs"
+                      variant="surface"
+                      aria-label="編集"
+                    >
+                      <Link href={`/photo/edit/${photo.id}`}>
+                        <HiPencil />
+                      </Link>
+                    </Button>
+                  )}
+                  <Button
+                    size="xs"
+                    colorPalette="red"
+                    aria-label="削除"
+                    loading={deletingPhotoId === photo.id}
+                    onClick={() => handleDeletePhoto(photo.id)}
+                  >
+                    削除
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
