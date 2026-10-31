@@ -1,4 +1,5 @@
 "use client";
+// @ts-expect-error CSS side-effect imports may not have declarations in this TypeScript setup.
 import "@/styles/bookshelf.css";
 import { AbsoluteCenter, Box, Text } from "@chakra-ui/react";
 import { Book } from "@/types/PhotoBlog/book";
@@ -31,7 +32,7 @@ export default function Bookshelf() {
             </AbsoluteCenter>
           </Box>
         </div>
-        <p className="title">New Book</p>
+        <p className="title">新規ブック</p>
       </Link>
       {loading ? (
         <p className="title">読み込み中...</p>

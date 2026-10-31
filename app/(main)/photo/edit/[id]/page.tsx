@@ -1,3 +1,4 @@
+import BackLink from "@/components/BackLink";
 import PhotoEditor from "@/components/PhotoEditor";
 
 type Props = {
@@ -6,5 +7,10 @@ type Props = {
 
 export default async function EditPhotoPage({ params }: Props) {
   const { id } = await params;
-  return <PhotoEditor id={id} />;
+  return (
+    <>
+      <BackLink href="/photo" label="写真一覧へ戻る" />
+      <PhotoEditor id={id} />
+    </>
+  );
 }

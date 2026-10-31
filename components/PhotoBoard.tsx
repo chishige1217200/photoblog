@@ -1,4 +1,5 @@
 "use client";
+// @ts-expect-error CSS side-effect imports may not have declarations in this TypeScript setup.
 import "@/styles/photoboard.css";
 import { Button, HStack } from "@chakra-ui/react";
 import { Photo } from "@/types/PhotoBlog/photo";
@@ -78,12 +79,9 @@ export default function PhotoBoard() {
             <p className="title">{photo.title ?? "無題"}</p>
             {photo.isOwner && (
               <HStack gap="2" mt="2">
-                <Link
-                  href={`/photo/edit/${photo.id}`}
-                  className="inline-block rounded-full border border-zinc-300 px-3 py-1 text-xs transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                >
-                  編集
-                </Link>
+                <Button asChild size="xs" variant="outline" colorPalette="gray" borderRadius="full">
+                  <Link href={`/photo/edit/${photo.id}`}>編集</Link>
+                </Button>
                 <Button
                   size="xs"
                   colorPalette="red"

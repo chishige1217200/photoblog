@@ -143,12 +143,9 @@ export default function BookView({ id }: Props) {
       <div className="mb-4 text-center">
         {(book.isOwner || book.isCollaborator) && (
           <HStack gap="2" mt="2">
-            <Link
-              href={`/book/edit/${id}`}
-              className="inline-block rounded-full border border-zinc-300 px-4 py-1 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            >
-              編集する
-            </Link>
+            <Button asChild size="sm" variant="outline" colorPalette="gray" borderRadius="full">
+              <Link href={`/book/edit/${id}`}>編集する</Link>
+            </Button>
             <Button
               size="sm"
               variant="outline"

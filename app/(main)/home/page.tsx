@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/auth";
 import { getUserSession } from "@/lib/sessionManager";
 import PhotoView from "@/components/photoView";
+import PageNav from "@/components/PageNav";
 
 export default async function Home() {
   const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
@@ -30,32 +31,7 @@ export default async function Home() {
               </button>
             </form>
           </div>
-          <div className="flex gap-4 p-4">
-            <Link
-              href="/photo"
-              className="gsi-material-button"
-            >
-              <div className="gsi-material-button-state"></div>
-              <div className="gsi-material-button-content-wrapper">
-                <span className="gsi-material-button-contents">
-                  写真一覧へ
-                </span>
-                <span style={{ display: "none" }}>写真一覧へ</span>
-              </div>
-            </Link>
-            <Link
-              href="/book"
-              className="gsi-material-button"
-            >
-              <div className="gsi-material-button-state"></div>
-              <div className="gsi-material-button-content-wrapper">
-                <span className="gsi-material-button-contents">
-                  本一覧へ
-                </span>
-                <span style={{ display: "none" }}>本一覧へ</span>
-              </div>
-            </Link>
-          </div>
+          <PageNav />
         </div>
       ) : (
         <></>
