@@ -179,7 +179,11 @@ export default function BookView({ id }: Props) {
       </div>
       {showPhotoForm && (book.isOwner || book.isCollaborator) && (
         <div className="mb-4">
-          <BookPhotoForm bookId={id} onUploaded={refreshBook} />
+          <BookPhotoForm
+            bookId={id}
+            existingPhotoIds={(book.photographs ?? []).map((p) => p.id)}
+            onUploaded={refreshBook}
+          />
         </div>
       )}
       {showDeleteMode &&

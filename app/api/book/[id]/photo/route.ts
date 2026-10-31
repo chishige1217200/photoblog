@@ -1,5 +1,6 @@
 import { getUserSession } from "@/lib/sessionManager";
 import { CmsBook, isCollaborator } from "@/types/microCMS/book";
+import { CmsPhoto, isOwner } from "@/types/microCMS/photo";
 import sharp from "sharp";
 
 export async function POST(
@@ -19,10 +20,13 @@ export async function POST(
   }
 
   // FormDataの読み取り
+  // file: 新規アップロード / photoId: アップロード済みフォトへの参照登録
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
-  if (!file) {
-    return new Response("No file provided", { status: 400 });
+  const photoId: string | undefined =
+    (formData.get("photoId") as string) || undefined;
+  if (!file && !photoId) {
+    return new Response("No file or photoId provided", { status: 400 });
   }
   const title: string | undefined =
     (formData.get("title") as string) || undefined;
@@ -53,75 +57,119 @@ export async function POST(
     });
   }
 
-  // sharpでEXIFを除去し、寸法を取得
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const metadata = await sharp(buffer).metadata();
-  const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
-
-  // microCMSにアップロード
-  const uploadForm = new FormData();
-  uploadForm.append(
-    "file",
-    new Blob([new Uint8Array(noExifBuffer)], { type: "image/jpeg" }),
-    file.name,
-  );
-
-  const uploadRes = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms-management.io/api/v1/media`,
-    {
-      method: "POST",
-      headers: {
-        "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
-      },
-      body: uploadForm,
-    },
-  );
-
-  if (!uploadRes.ok) {
-    const error = await uploadRes.text();
-    console.error("Upload error:", error);
-    return new Response(error, { status: uploadRes.status });
-  }
-
-  const uploadResData = (await uploadRes.json()) as { url: string };
-  console.log("Upload success: ", uploadResData.url);
-
-  // photoAPIでフォトコンテンツを登録（photographsはphotoへの複数コンテンツ参照）
-  const photoData = {
-    photograph: uploadResData.url,
-    title,
-    caption,
-    shotAt,
-    ownerUserId: session.user?.email,
-  };
-
-  const photoRes = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo`,
-    {
-      method: "POST",
-      headers: {
-        "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(photoData),
-    },
-  );
-
-  if (!photoRes.ok) {
-    const error = await photoRes.text();
-    console.error("Photo registration error:", error);
-    return new Response(error, { status: photoRes.status });
-  }
-
-  const photoResData = (await photoRes.json()) as { id: string };
-  console.log("Photo registration successful: ", photoResData.id);
-
-  // 既存のphotographs（フォトID配列）に新フォトIDを追加
+  // 既存のphotographs（フォトID配列）
   const existingPhotoIds = (existingBook.photographs ?? []).map(
     (photo) => photo.id,
   );
-  const photographs = [...existingPhotoIds, photoResData.id];
+
+  // ブックに追加するフォトのIDを決める
+  let addedPhotoId: string;
+
+  if (photoId) {
+    // 参照登録：アップロード済みフォトを取得し、所有者であることを確認
+    const photoRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo/${photoId}`,
+      {
+        method: "GET",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+        },
+      },
+    );
+
+    if (!photoRes.ok) {
+      const error = await photoRes.text();
+      console.error("Photo fetch error:", error);
+      return new Response("Failed to fetch photo data", {
+        status: photoRes.status,
+      });
+    }
+
+    const photo: CmsPhoto = await photoRes.json();
+    if (!isOwner(photo, session.user?.email || undefined)) {
+      return new Response("You don't have permission to perform this action", {
+        status: 403,
+      });
+    }
+
+    if (existingPhotoIds.includes(photoId)) {
+      return new Response("Photo is already registered in this book", {
+        status: 409,
+      });
+    }
+
+    addedPhotoId = photoId;
+    console.log("Photo reference add requested: ", addedPhotoId);
+  } else {
+    // 新規アップロード：sharpでEXIFを除去し、寸法を取得
+    const arrayBuffer = await file!.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const metadata = await sharp(buffer).metadata();
+    const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
+
+    // microCMSにアップロード
+    const uploadForm = new FormData();
+    uploadForm.append(
+      "file",
+      new Blob([new Uint8Array(noExifBuffer)], { type: "image/jpeg" }),
+      file!.name,
+    );
+
+    const uploadRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms-management.io/api/v1/media`,
+      {
+        method: "POST",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+        },
+        body: uploadForm,
+      },
+    );
+
+    if (!uploadRes.ok) {
+      const error = await uploadRes.text();
+      console.error("Upload error:", error);
+      return new Response(error, { status: uploadRes.status });
+    }
+
+    const uploadResData = (await uploadRes.json()) as { url: string };
+    console.log("Upload success: ", uploadResData.url);
+
+    // photoAPIでフォトコンテンツを登録（photographsはphotoへの複数コンテンツ参照）
+    const photoData = {
+      photograph: uploadResData.url,
+      title,
+      caption,
+      shotAt,
+      ownerUserId: session.user?.email,
+    };
+
+    const photoRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo`,
+      {
+        method: "POST",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(photoData),
+      },
+    );
+
+    if (!photoRes.ok) {
+      const error = await photoRes.text();
+      console.error("Photo registration error:", error);
+      return new Response(error, { status: photoRes.status });
+    }
+
+    const photoResData = (await photoRes.json()) as { id: string };
+    console.log("Photo registration successful: ", photoResData.id);
+
+    addedPhotoId = photoResData.id;
+  }
+
+  // 既存のphotographs（フォトID配列）に新フォトIDを追加
+  const photographs = [...existingPhotoIds, addedPhotoId];
 
   // photographsのみを更新（複数コンテンツ参照は参照先コンテンツのID配列で指定）
   const res = await fetch(
