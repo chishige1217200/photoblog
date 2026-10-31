@@ -27,29 +27,48 @@ const PhotoBook: React.FC<Props> = ({
   width = 450,
   height = 650,
 }) => {
-  const [loading, setLoading] = useState<boolean>(true);
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
 
   const [loadedCount, setLoadedCount] = useState(0);
 
   const handleImageLoad = () => {
-    setLoadedCount((c) => c + 1);
+    // キャッシュ済み画像が再度 onLoad を発火させても ready が false に戻らないよう、
+    // 上限で止める。ready が戻ると破棄と再初期化が繰り返され、BookView が
+    // 一瞬表示された後に消える原因になる。
+    setLoadedCount((c) => Math.min(c + 1, photos.length));
   };
 
-  const ready = loadedCount === photos.length && photos.length > 0;
+  const ready = photos.length > 0 && loadedCount >= photos.length;
 
   useEffect(() => {
     if (!ready) return;
     if (!bookRef.current) return;
-    if (!loading) return;
+    // 初回レンダリングは GetWindowSize() が 0 を返すため、サイズが確定するまで待機する
+    if (width <= 0 || height <= 0) return;
 
+    const container = bookRef.current;
     const pages = Array.from(
-      bookRef.current.querySelectorAll(".page"),
+      container.querySelectorAll(":scope > .page"),
     ) as HTMLElement[];
     if (pages.length === 0) return;
 
-    flipRef.current = new PageFlip(bookRef.current, {
+    // page-flip はコンテナへ自前のノードを注入し、React が描画したページを内部へ移動し、
+    // クラスやスタイルを書き換える。破棄時に元へ戻すため、変更前を控えておく。
+    const containerSnapshot = {
+      className: container.className,
+      style: container.getAttribute("style"),
+    };
+    const pageSnapshot = pages.map((page) => ({
+      page,
+      className: page.className,
+      style: page.getAttribute("style"),
+    }));
+
+    // ページが page-flip の体裁になるまでは重ね描きした状態が見えるため、非表示にする
+    container.style.visibility = "hidden";
+
+    flipRef.current = new PageFlip(container, {
       width,
       height,
       size: "fixed" as SizeType,
@@ -58,14 +77,29 @@ const PhotoBook: React.FC<Props> = ({
       mobileScrollSupport: true,
     });
 
+    flipRef.current.on("init", () => {
+      container.style.visibility = "visible";
+    });
     flipRef.current.loadFromHTML(pages);
-    setLoading(false);
 
     return () => {
-      flipRef.current?.destroy();
+      // destroy() はコンテナ自体を削除してしまうため、page-flip が注入した UI だけを消す。
+      // コンテナが削除されると再初期化できず、BookView が一瞬表示された後に消える。
+      flipRef.current?.getUI().destroy();
       flipRef.current = null;
+
+      // page-flip が書き換えたコンテナとページを、React が描画した状態へ戻す
+      container.className = containerSnapshot.className;
+      if (containerSnapshot.style === null) container.removeAttribute("style");
+      else container.setAttribute("style", containerSnapshot.style);
+
+      for (const { page, className, style } of pageSnapshot) {
+        container.appendChild(page);
+        page.className = className;
+        if (style === null) page.removeAttribute("style");
+        else page.setAttribute("style", style);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, photos, width, height]);
 
   const renderCover = () => (
@@ -110,7 +144,7 @@ const PhotoBook: React.FC<Props> = ({
         width,
         height,
         margin: "0 auto",
-        visibility: loading ? "hidden" : "visible",
+        visibility: ready ? "visible" : "hidden",
       }}
     >
       {renderCover()}
