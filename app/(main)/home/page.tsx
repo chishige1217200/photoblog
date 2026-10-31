@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signOut } from "@/auth";
 import { getUserSession } from "@/lib/sessionManager";
 import PhotoView from "@/components/photoView";
@@ -29,7 +30,32 @@ export default async function Home() {
               </button>
             </form>
           </div>
-          <PhotoView />
+          <div className="flex gap-4 p-4">
+            <Link
+              href="/photo"
+              className="gsi-material-button"
+            >
+              <div className="gsi-material-button-state"></div>
+              <div className="gsi-material-button-content-wrapper">
+                <span className="gsi-material-button-contents">
+                  写真一覧へ
+                </span>
+                <span style={{ display: "none" }}>写真一覧へ</span>
+              </div>
+            </Link>
+            <Link
+              href="/book"
+              className="gsi-material-button"
+            >
+              <div className="gsi-material-button-state"></div>
+              <div className="gsi-material-button-content-wrapper">
+                <span className="gsi-material-button-contents">
+                  本一覧へ
+                </span>
+                <span style={{ display: "none" }}>本一覧へ</span>
+              </div>
+            </Link>
+          </div>
         </div>
       ) : (
         <></>
