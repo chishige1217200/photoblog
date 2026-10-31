@@ -9,7 +9,7 @@ export default async function BookPage({ params }: Props) {
   const { id } = await params;
   return (
     <>
-      <BackLink href="/book" label="本一覧へ戻る" />
+      <BackLink href="/book" label="ブック一覧へ戻る" />
       <BookView id={id} />
     </>
   );
