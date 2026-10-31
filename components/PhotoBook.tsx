@@ -59,7 +59,6 @@ const PhotoBook: React.FC<Props> = ({
     });
 
     flipRef.current.loadFromHTML(pages);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(false);
 
     return () => {

@@ -21,16 +21,15 @@ import {
   CloseButton,
   Center,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { HiUpload } from "react-icons/hi";
 import {
   LuCircleArrowLeft,
   LuImages,
   LuNotebookPen,
-  LuShare,
   LuShare2,
 } from "react-icons/lu";
-import { Toaster, toaster } from "../ui/toaster";
+import { toaster } from "../ui/toaster";
 import { Lens } from "../ui/lens";
 
 export default function PhotoForm() {
@@ -42,11 +41,10 @@ export default function PhotoForm() {
   const [editors, setEditors] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [url, setUrl] = useState("");
-
-  useEffect(() => {
-    setUrl(window.location.href);
-  }, []);
+  // SSR時は空文字、クライアント側では現在のURLを初期値とする
+  const [url] = useState(() =>
+    typeof window !== "undefined" ? window.location.href : "",
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,6 +223,8 @@ export default function PhotoForm() {
                     isStatic={false}
                     ariaLabel="Zoom Area"
                   >
+                    {/* blob URLのプレビューのためnext/imageは使えない */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={previewImage} alt="Preview" />
                   </Lens>
                 ) : (

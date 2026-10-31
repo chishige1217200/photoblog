@@ -1,9 +1,5 @@
 import { getUserSession } from "@/lib/sessionManager";
-import {
-  CmsBook,
-  convertToBook,
-  isCollaborator,
-} from "@/types/microCMS/book";
+import { CmsBook, isCollaborator } from "@/types/microCMS/book";
 import { NextRequest } from "next/server";
 
 export async function GET(

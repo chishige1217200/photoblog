@@ -4,9 +4,7 @@ import { AuroraText } from "@/components/ui/aurora-text";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { ShineBorder } from "@/components/ui/shine-border";

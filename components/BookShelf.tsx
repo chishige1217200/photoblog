@@ -2,6 +2,7 @@
 import "@/styles/bookshelf.css";
 import { AbsoluteCenter, Box, Text } from "@chakra-ui/react";
 import { Book } from "@/types/PhotoBlog/book";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -40,7 +41,12 @@ export default function Bookshelf() {
           <Link key={book.id} href={`/book/${book.id}`} className="book-item">
             <div className="book">
               {book.thumbnail?.url ? (
-                <img src={book.thumbnail.url} alt={book.title ?? ""} />
+                <Image
+                  src={book.thumbnail.url}
+                  alt={book.title ?? ""}
+                  width={book.thumbnail.width}
+                  height={book.thumbnail.height}
+                />
               ) : (
                 <Box position="relative" h="100%">
                   <AbsoluteCenter>

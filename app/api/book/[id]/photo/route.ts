@@ -101,10 +101,9 @@ export async function POST(
     addedPhotoId = photoId;
     console.log("Photo reference add requested: ", addedPhotoId);
   } else {
-    // 新規アップロード：sharpでEXIFを除去し、寸法を取得
+    // 新規アップロード：sharpでEXIFを除去
     const arrayBuffer = await file!.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const metadata = await sharp(buffer).metadata();
     const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
 
     // microCMSにアップロード

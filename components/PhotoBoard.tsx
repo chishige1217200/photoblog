@@ -2,6 +2,7 @@
 import "@/styles/photoboard.css";
 import { Button, HStack } from "@chakra-ui/react";
 import { Photo } from "@/types/PhotoBlog/photo";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toaster } from "./ui/toaster";
@@ -70,7 +71,12 @@ export default function PhotoBoard() {
           <div key={photo.id} className="book-item">
             <div className="book">
               {photo.photograph?.url ? (
-                <img src={photo.photograph.url} alt={photo.title ?? ""} />
+                <Image
+                  src={photo.photograph.url}
+                  alt={photo.title ?? ""}
+                  width={photo.photograph.width}
+                  height={photo.photograph.height}
+                />
               ) : (
                 <div className="book" />
               )}

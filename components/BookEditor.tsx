@@ -323,6 +323,8 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
                     isStatic={false}
                     ariaLabel="Zoom Area"
                   >
+                    {/* blob URLのプレビューのためnext/imageは使えない */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={previewImage}
                       alt="Preview"

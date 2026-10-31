@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { signOut } from "@/auth";
 import { getUserSession } from "@/lib/sessionManager";
-import PhotoView from "@/components/photoView";
 import PageNav from "@/components/PageNav";
 
 export default async function Home() {
