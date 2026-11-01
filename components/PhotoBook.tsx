@@ -53,6 +53,23 @@ const PhotoBook: React.FC<Props> = ({
     ) as HTMLElement[];
     if (pages.length === 0) return;
 
+    // 両開き（2ページ）を表示するには、コンテナの実効幅が「1ページ分の幅 × 2」以上
+    // でなければならない。呼び出し側は window.innerWidth（スクロールバー込み）から
+    // 幅を計算するため、実測した配置領域より常に数px足りず、page-flip が単ページの
+    // 縦表示（portrait）へ落ちていた。配置領域の実測値から1ページ分のサイズを決め直す。
+    const parent = container.parentElement;
+    let measured = 0;
+    if (parent) {
+      const parentStyle = getComputedStyle(parent);
+      measured =
+        parent.getBoundingClientRect().width -
+        (parseFloat(parentStyle.paddingLeft) || 0) -
+        (parseFloat(parentStyle.paddingRight) || 0);
+    }
+    const availableWidth = measured > 0 ? Math.floor(measured) : width * 2;
+    const pageWidth = Math.max(1, Math.min(width, Math.floor(availableWidth / 2)));
+    const pageHeight = Math.max(1, Math.round((pageWidth * height) / width));
+
     // page-flip はコンテナへ自前のノードを注入し、React が描画したページを内部へ移動し、
     // クラスやスタイルを書き換える。破棄時に元へ戻すため、変更前を控えておく。
     const containerSnapshot = {
@@ -67,10 +84,11 @@ const PhotoBook: React.FC<Props> = ({
 
     // ページが page-flip の体裁になるまでは重ね描きした状態が見えるため、非表示にする
     container.style.visibility = "hidden";
+    container.style.height = `${pageHeight}px`;
 
     flipRef.current = new PageFlip(container, {
-      width,
-      height,
+      width: pageWidth,
+      height: pageHeight,
       size: "fixed" as SizeType,
       showCover: true,
       useMouseEvents: true,
