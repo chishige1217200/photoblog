@@ -162,7 +162,8 @@ export async function POST(req: Request) {
     subTitle,
     author,
     thumbnail,
-    photographs: existingBook.photographs,
+    // 複数コンテンツ参照は参照先コンテンツのID配列で指定する（GETで展開されたオブジェクト配列をそのまま送ると参照がクリアされる）
+    photographs: (existingBook.photographs ?? []).map((photo) => photo.id),
     isPrivate,
     allowUserIds: convertFromList(viewers),
     collaborateUserIds: convertFromList(editors),
