@@ -5,7 +5,11 @@ import {
   isCollaborator,
 } from "@/types/microCMS/book";
 import { UploadImageResponse } from "@/types/microCMS/image";
-import { RegistCmsPhoto } from "@/types/microCMS/photo";
+import {
+  CmsPhoto,
+  isOwner,
+  RegistCmsPhoto,
+} from "@/types/microCMS/photo";
 import sharp from "sharp";
 
 export async function POST(req: Request) {
@@ -32,6 +36,9 @@ export async function POST(req: Request) {
   const viewers = formData.getAll("viewers") as string[];
   const editors = formData.getAll("editors") as string[];
   const file = formData.get("file") as File | null;
+  // file: 新規アップロード / thumbnailPhotoId: アップロード済みフォトの参照指定
+  const thumbnailPhotoId: string | undefined =
+    (formData.get("thumbnailPhotoId") as string) || undefined;
 
   // 既存のブックを取得し、編集権限を確認
   const existingRes = await fetch(
@@ -55,9 +62,41 @@ export async function POST(req: Request) {
     });
   }
 
-  // サムネイルが更新された場合のみアップロード
+  // サムネイルが更新された場合のみ反映
   let thumbnail = existingBook.thumbnail?.url;
-  if (file) {
+  if (thumbnailPhotoId) {
+    // 既存フォトを参照してサムネイルに使用（フォトデータの再登録はしない）
+    const photoRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo/${thumbnailPhotoId}`,
+      {
+        method: "GET",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+        },
+      },
+    );
+
+    if (!photoRes.ok) {
+      const error = await photoRes.text();
+      console.error("Photo fetch error:", error);
+      return new Response("Failed to fetch photo data", {
+        status: photoRes.status,
+      });
+    }
+
+    const photo: CmsPhoto = await photoRes.json();
+    if (!isOwner(photo, session.user?.email || undefined)) {
+      return new Response("You don't have permission to perform this action", {
+        status: 403,
+      });
+    }
+    if (!photo.photograph?.url) {
+      return new Response("Photo has no image", { status: 400 });
+    }
+
+    thumbnail = photo.photograph.url;
+    console.log("Thumbnail from existing photo: ", thumbnailPhotoId);
+  } else if (file) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();

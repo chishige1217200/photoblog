@@ -12,6 +12,11 @@ import {
   Span,
   Skeleton,
   HStack,
+  SegmentGroupRoot,
+  SegmentGroupItem,
+  SegmentGroupItemHiddenInput,
+  SegmentGroupItemText,
+  SegmentGroupIndicator,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { HiUpload } from "react-icons/hi";
@@ -19,6 +24,9 @@ import { useRouter } from "next/navigation";
 import { toaster } from "./ui/toaster";
 import { Lens } from "./ui/lens";
 import { CmsBook, convertToList } from "@/types/microCMS/book";
+import { Photo } from "@/types/PhotoBlog/photo";
+
+type ThumbnailMode = "upload" | "existing";
 
 export type BookEditorProps = {
   id?: string;
@@ -62,6 +70,15 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
   const [file, setFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // サムネイルの選択方法：新規アップロード or 既存フォトから選択
+  const [thumbnailMode, setThumbnailMode] = useState<ThumbnailMode>("upload");
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  // 編集対象ブックの元サムネイル（モード切り戻し時に戻す）
+  const [originalThumbnail, setOriginalThumbnail] = useState<string | null>(
+    null,
+  );
 
   const loadBook = async (bookId: string) => {
     try {
@@ -79,6 +96,7 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
       setEditors(convertToList(data.collaborateUserIds));
       if (data.thumbnail?.url) {
         setPreviewImage(data.thumbnail.url);
+        setOriginalThumbnail(data.thumbnail.url);
       }
     } catch (err) {
       console.error(err);
@@ -92,6 +110,55 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
     }
   }, [id]);
 
+  // 既存フォト一覧を取得（「既存フォトから選択」へ切り替えた時に一度だけ呼ぶ）
+  const fetchPhotos = async () => {
+    setPhotosLoading(true);
+    try {
+      const res = await fetch("/api/photo/search?limit=100");
+      if (res.ok) {
+        const data = (await res.json()) as { contents: Photo[] };
+        setPhotos(data.contents);
+      } else {
+        toaster.create({
+          title: "フォトの取得に失敗しました",
+          type: "error",
+          closable: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toaster.create({
+        title: "エラーが発生しました",
+        type: "error",
+        closable: true,
+      });
+    } finally {
+      setPhotosLoading(false);
+    }
+  };
+
+  const selectThumbnailMode = (mode: ThumbnailMode) => {
+    setThumbnailMode(mode);
+    if (mode === "existing") {
+      if (photos.length === 0) {
+        fetchPhotos();
+      }
+    } else {
+      // アップロードへ戻す場合、未確定の既存フォト選択は取り消して元サムネイルへ戻す
+      setFile(null);
+      setSelectedPhotoId(null);
+      setPreviewImage(originalThumbnail);
+    }
+  };
+
+  const selectExistingPhoto = (photo: Photo) => {
+    setSelectedPhotoId(photo.id);
+    setFile(null);
+    if (photo.photograph?.url) {
+      setPreviewImage(photo.photograph.url);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -104,10 +171,20 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
       });
       return;
     }
-    if (!file && !id) {
+    if (thumbnailMode === "upload") {
+      if (!file && !id) {
+        toaster.create({
+          title: "エラー",
+          description: "サムネイルのフォトを選択してください。",
+          type: "error",
+          closable: true,
+        });
+        return;
+      }
+    } else if (!selectedPhotoId) {
       toaster.create({
         title: "エラー",
-        description: "サムネイルのフォトを選択してください。",
+        description: "サムネイルに使用する既存フォトを選択してください。",
         type: "error",
         closable: true,
       });
@@ -121,7 +198,9 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
     formData.append("isPrivate", String(isPrivate));
     viewers.forEach((v) => formData.append("viewers", v));
     editors.forEach((v) => formData.append("editors", v));
-    if (file) {
+    if (thumbnailMode === "existing") {
+      formData.append("thumbnailPhotoId", selectedPhotoId!);
+    } else if (file) {
       formData.append("file", file);
     }
 
@@ -299,43 +378,107 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
 
         <Section title="ブックのサムネイル" description="フォトプレビュー">
           <VStack gap="4" width="full" align="stretch">
+            {/* 幅の狭いサムネイル欄では横並びにするとボタンがはみ出すため、
+                ラベルを上に置き、セグメントを全幅で等分に広げる */}
             <Field.Root>
-              <FileUpload.Root
-                accept={["image/*"]}
-                onFileChange={(e) => {
-                  const files = e.acceptedFiles;
-                  if (files && files.length > 0) {
-                    setFile(files[0]);
-                    setPreviewImage(URL.createObjectURL(files[0]));
-                  }
-                }}
+              <Field.Label>選択方法</Field.Label>
+              <SegmentGroupRoot
+                value={thumbnailMode}
+                onValueChange={(e) => selectThumbnailMode(e.value as ThumbnailMode)}
+                size="xs"
+                width="full"
+                minW="0"
               >
-                <FileUpload.HiddenInput />
-                <FileUpload.Trigger asChild>
-                  <Button variant="outline" size="sm" width="full">
-                    <HiUpload /> フォトを選択する
-                  </Button>
-                </FileUpload.Trigger>
-                {previewImage ? (
-                  <Lens
-                    zoomFactor={2}
-                    lensSize={150}
-                    isStatic={false}
-                    ariaLabel="Zoom Area"
-                  >
-                    {/* blob URLのプレビューのためnext/imageは使えない */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="w-full rounded-md"
-                    />
-                  </Lens>
-                ) : (
-                  <Skeleton className="w-full aspect-4/3" />
-                )}
-              </FileUpload.Root>
+                <SegmentGroupItem value="upload" flex="1" minW="0" px="2">
+                  <SegmentGroupItemText>新規アップロード</SegmentGroupItemText>
+                  <SegmentGroupItemHiddenInput />
+                </SegmentGroupItem>
+                <SegmentGroupItem value="existing" flex="1" minW="0" px="2">
+                  <SegmentGroupItemText>既存フォトから選択</SegmentGroupItemText>
+                  <SegmentGroupItemHiddenInput />
+                </SegmentGroupItem>
+                <SegmentGroupIndicator />
+              </SegmentGroupRoot>
             </Field.Root>
+
+            {thumbnailMode === "upload" ? (
+              <Field.Root>
+                <FileUpload.Root
+                  accept={["image/*"]}
+                  onFileChange={(e) => {
+                    const files = e.acceptedFiles;
+                    if (files && files.length > 0) {
+                      setFile(files[0]);
+                      setSelectedPhotoId(null);
+                      setPreviewImage(URL.createObjectURL(files[0]));
+                    }
+                  }}
+                >
+                  <FileUpload.HiddenInput />
+                  <FileUpload.Trigger asChild>
+                    <Button variant="outline" size="sm" width="full">
+                      <HiUpload /> フォトを選択する
+                    </Button>
+                  </FileUpload.Trigger>
+                  {previewImage ? (
+                    <Lens
+                      zoomFactor={2}
+                      lensSize={150}
+                      isStatic={false}
+                      ariaLabel="Zoom Area"
+                    >
+                      {/* blob URLのプレビューのためnext/imageは使えない */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previewImage}
+                        alt="Preview"
+                        className="w-full rounded-md"
+                      />
+                    </Lens>
+                  ) : (
+                    <Skeleton className="w-full aspect-4/3" />
+                  )}
+                </FileUpload.Root>
+              </Field.Root>
+            ) : (
+              <Field.Root>
+                <Field.HelperText>
+                  サムネイルに使用したいフォトを選択してください。
+                </Field.HelperText>
+                {photosLoading ? (
+                  <Skeleton className="w-full h-40" />
+                ) : photos.length > 0 ? (
+                  <div className="grid max-h-80 w-full grid-cols-2 gap-2 overflow-y-auto">
+                    {photos.map((photo) => (
+                      <button
+                        key={photo.id}
+                        type="button"
+                        onClick={() => selectExistingPhoto(photo)}
+                        className={`overflow-hidden rounded-lg border-2 ${
+                          selectedPhotoId === photo.id
+                            ? "border-blue-500"
+                            : "border-zinc-200 dark:border-zinc-700"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photo.photograph?.url ?? ""}
+                          alt={photo.title ?? ""}
+                          className="aspect-square w-full object-cover"
+                        />
+                        <span className="block truncate bg-black/50 px-1 py-0.5 text-xs text-white">
+                          {photo.title ?? "無題"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <Text textStyle="sm" color="fg.muted">
+                    選択できるフォトがありません。
+                  </Text>
+                )}
+              </Field.Root>
+            )}
             {!id && (
               <Span textStyle="xs" color="fg.muted">
                 <Text>サムネイルは必須です。</Text>

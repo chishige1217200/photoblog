@@ -1,7 +1,7 @@
 import { getUserSession } from "@/lib/sessionManager";
 import { convertFromList } from "@/types/microCMS/book";
 import { UploadImageResponse } from "@/types/microCMS/image";
-import { RegistCmsPhoto } from "@/types/microCMS/photo";
+import { CmsPhoto, RegistCmsPhoto, isOwner } from "@/types/microCMS/photo";
 import sharp from "sharp";
 
 export async function POST(req: Request) {
@@ -24,81 +24,122 @@ export async function POST(req: Request) {
   const viewers = formData.getAll("viewers") as string[];
   const editors = formData.getAll("editors") as string[];
   const file = formData.get("file") as File | null;
+  // file: 新規アップロード / thumbnailPhotoId: アップロード済みフォトの参照指定
+  const thumbnailPhotoId: string | undefined =
+    (formData.get("thumbnailPhotoId") as string) || undefined;
 
   if (!title) {
     return new Response("Title is required", { status: 400 });
   }
-  if (!file) {
+  if (!file && !thumbnailPhotoId) {
     return new Response("Thumbnail is required", { status: 400 });
   }
 
-  // sharpでEXIFを除去
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
+  // サムネイル画像のURLを決める（新規アップロード or 既存フォト参照）
+  let thumbnail: string;
 
-  // サムネイルをmicroCMSにアップロード
-  const uploadForm = new FormData();
-  uploadForm.append(
-    "file",
-    new Blob([new Uint8Array(noExifBuffer)], { type: "image/jpeg" }),
-    file.name,
-  );
-
-  const uploadRes = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms-management.io/api/v1/media`,
-    {
-      method: "POST",
-      headers: {
-        "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+  if (thumbnailPhotoId) {
+    // 既存フォトを参照してサムネイルに使用（フォトデータの再登録はしない）
+    const photoRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo/${thumbnailPhotoId}`,
+      {
+        method: "GET",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+        },
       },
-      body: uploadForm,
-    },
-  );
+    );
 
-  if (!uploadRes.ok) {
-    const error = await uploadRes.text();
-    console.error("Thumbnail upload error:", error);
-    return new Response(error, { status: uploadRes.status });
-  }
+    if (!photoRes.ok) {
+      const error = await photoRes.text();
+      console.error("Photo fetch error:", error);
+      return new Response("Failed to fetch photo data", {
+        status: photoRes.status,
+      });
+    }
 
-  const uploadResData: UploadImageResponse = await uploadRes.json();
-  console.log("Thumbnail upload success: ", uploadResData.url);
+    const photo: CmsPhoto = await photoRes.json();
+    if (!isOwner(photo, session.user?.email || undefined)) {
+      return new Response("You don't have permission to perform this action", {
+        status: 403,
+      });
+    }
+    if (!photo.photograph?.url) {
+      return new Response("Photo has no image", { status: 400 });
+    }
 
-  // サムネイルに選択した画像もフォトデータとして登録
-  const photoData: RegistCmsPhoto = {
-    photograph: uploadResData.url,
-    title,
-    ownerUserId: session.user?.email ?? undefined,
-  };
+    thumbnail = photo.photograph.url;
+    console.log("Thumbnail from existing photo: ", thumbnailPhotoId);
+  } else {
+    // 新規アップロード：sharpでEXIFを除去
+    const arrayBuffer = await file!.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const noExifBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
 
-  const photoRes = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo`,
-    {
-      method: "POST",
-      headers: {
-        "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
-        "Content-Type": "application/json",
+    // サムネイルをmicroCMSにアップロード
+    const uploadForm = new FormData();
+    uploadForm.append(
+      "file",
+      new Blob([new Uint8Array(noExifBuffer)], { type: "image/jpeg" }),
+      file!.name,
+    );
+
+    const uploadRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms-management.io/api/v1/media`,
+      {
+        method: "POST",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+        },
+        body: uploadForm,
       },
-      body: JSON.stringify(photoData),
-    },
-  );
+    );
 
-  if (!photoRes.ok) {
-    const error = await photoRes.text();
-    console.error("Thumbnail photo registration error:", error);
-    return new Response(error, { status: photoRes.status });
+    if (!uploadRes.ok) {
+      const error = await uploadRes.text();
+      console.error("Thumbnail upload error:", error);
+      return new Response(error, { status: uploadRes.status });
+    }
+
+    const uploadResData: UploadImageResponse = await uploadRes.json();
+    console.log("Thumbnail upload success: ", uploadResData.url);
+    thumbnail = uploadResData.url;
+
+    // サムネイルに選択した画像もフォトデータとして登録
+    const photoData: RegistCmsPhoto = {
+      photograph: uploadResData.url,
+      title,
+      ownerUserId: session.user?.email ?? undefined,
+    };
+
+    const photoRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo`,
+      {
+        method: "POST",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(photoData),
+      },
+    );
+
+    if (!photoRes.ok) {
+      const error = await photoRes.text();
+      console.error("Thumbnail photo registration error:", error);
+      return new Response(error, { status: photoRes.status });
+    }
+
+    const photoResData = await photoRes.json();
+    console.log("Thumbnail photo registration successful: ", photoResData.id);
   }
-
-  const photoResData = await photoRes.json();
-  console.log("Thumbnail photo registration successful: ", photoResData.id);
 
   // bookAPIでデータ登録
   const bookData = {
     title,
     subTitle,
     author,
-    thumbnail: uploadResData.url,
+    thumbnail,
     photographs: [],
     isPrivate,
     allowUserIds: convertFromList(viewers),
