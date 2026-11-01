@@ -5,6 +5,7 @@ import {
   isCollaborator,
 } from "@/types/microCMS/book";
 import { UploadImageResponse } from "@/types/microCMS/image";
+import { RegistCmsPhoto } from "@/types/microCMS/photo";
 import sharp from "sharp";
 
 export async function POST(req: Request) {
@@ -87,6 +88,34 @@ export async function POST(req: Request) {
 
     const uploadResData: UploadImageResponse = await uploadRes.json();
     thumbnail = uploadResData.url;
+
+    // サムネイルに選択した画像もフォトデータとして登録
+    const photoData: RegistCmsPhoto = {
+      photograph: uploadResData.url,
+      title,
+      ownerUserId: session.user?.email ?? undefined,
+    };
+
+    const photoRes = await fetch(
+      `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/photo`,
+      {
+        method: "POST",
+        headers: {
+          "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(photoData),
+      },
+    );
+
+    if (!photoRes.ok) {
+      const error = await photoRes.text();
+      console.error("Thumbnail photo registration error:", error);
+      return new Response(error, { status: photoRes.status });
+    }
+
+    const photoResData = await photoRes.json();
+    console.log("Thumbnail photo registration successful: ", photoResData.id);
   }
 
   const bookData = {
