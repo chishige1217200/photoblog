@@ -1,39 +1,36 @@
-"use client";
+import { getUserSession } from "@/lib/sessionManager";
+import { signOutAction } from "@/lib/actions/auth";
+import PageNavLinks from "@/components/PageNavLinks";
 
-import { Button, HStack } from "@chakra-ui/react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-const navLinks = [
-  { href: "/home", label: "ホーム" },
-  { href: "/photo", label: "フォト一覧" },
-  { href: "/book", label: "ブック一覧" },
-];
-
-export default function PageNav() {
-  const pathname = usePathname();
+export default async function PageNav() {
+  const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
+  const session = await getUserSession();
+  const email = session?.user?.email;
 
   return (
-    <HStack as="nav" gap="3" wrap="wrap" justify="center" px="4" py="4">
-      {navLinks.map((link) => {
-        const active =
-          pathname === link.href || pathname.startsWith(link.href + "/");
-        return (
-          <Button
-            key={link.href}
-            asChild
-            size="sm"
-            variant={active ? "solid" : "outline"}
-            colorPalette="gray"
-            minW="7rem"
-            borderRadius="full"
-            whiteSpace="nowrap"
-            aria-current={active ? "page" : undefined}
+    <div className="w-full px-4 py-4">
+      <div className="flex flex-col items-center gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-x-4">
+        {/* 左カラム: 中央寄せのバランス用 */}
+        <div className="hidden lg:block" aria-hidden="true" />
+        <PageNavLinks />
+        {email ? (
+          <form
+            action={signOutAction}
+            className="flex items-center justify-center gap-2 lg:justify-end"
           >
-            <Link href={link.href}>{link.label}</Link>
-          </Button>
-        );
-      })}
-    </HStack>
+            <h2 className="whitespace-nowrap text-sm">ユーザID: {email}</h2>
+            <button className="gsi-material-button" disabled={offlineMode}>
+              <div className="gsi-material-button-state"></div>
+              <div className="gsi-material-button-content-wrapper">
+                <span className="gsi-material-button-contents">ログアウト</span>
+                <span style={{ display: "none" }}>ログアウト</span>
+              </div>
+            </button>
+          </form>
+        ) : (
+          <div className="hidden lg:block" aria-hidden="true" />
+        )}
+      </div>
+    </div>
   );
 }
