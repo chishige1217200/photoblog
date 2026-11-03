@@ -126,7 +126,7 @@ export default function BookWorkspace({
             ? "このブックを編集できません。"
             : "このブックを編集する権限がありません。"}
         </p>
-        <Button asChild size="sm" variant="outline" borderRadius="full">
+        <Button asChild size="sm" variant="outline">
           <Link href="/book">ブック一覧へ戻る</Link>
         </Button>
       </div>
@@ -175,10 +175,10 @@ export default function BookWorkspace({
         </div>
 
         <HStack gap="2" ms="auto" wrap="wrap">
-          <Button asChild size="sm" variant="outline" borderRadius="full">
+          <Button asChild size="sm" variant="outline">
             <Link href="/book">ブック一覧</Link>
           </Button>
-          <Button asChild size="sm" variant="outline" borderRadius="full">
+          <Button asChild size="sm" variant="outline">
             <Link href={`/book/${id}`}>
               <HiBookOpen /> 閲覧する
             </Link>
@@ -188,7 +188,6 @@ export default function BookWorkspace({
               size="sm"
               variant="outline"
               colorPalette="red"
-              borderRadius="full"
               onClick={() => setDeleteOpen(true)}
             >
               <HiTrash /> ブックを削除

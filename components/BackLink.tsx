@@ -9,7 +9,7 @@ type Props = {
 export default function BackLink({ href, label }: Props) {
   return (
     <HStack justify="center" px="4" py="4">
-      <Button asChild size="sm" variant="outline" colorPalette="gray" borderRadius="full">
+      <Button asChild size="sm" variant="outline" colorPalette="gray">
         <Link href={href}>&larr; {label}</Link>
       </Button>
     </HStack>

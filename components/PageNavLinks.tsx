@@ -26,7 +26,6 @@ export default function PageNavLinks() {
             variant={active ? "solid" : "outline"}
             colorPalette="gray"
             minW="7rem"
-            borderRadius="full"
             whiteSpace="nowrap"
             aria-current={active ? "page" : undefined}
           >

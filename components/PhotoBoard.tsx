@@ -84,7 +84,7 @@ export default function PhotoBoard() {
             <p className="title">{photo.title ?? "無題"}</p>
             {photo.isOwner && (
               <HStack gap="2" mt="2">
-                <Button asChild size="xs" variant="outline" colorPalette="gray" borderRadius="full">
+                <Button asChild size="xs" variant="outline" colorPalette="gray">
                   <Link href={`/photo/edit/${photo.id}`}>編集</Link>
                 </Button>
                 <Button

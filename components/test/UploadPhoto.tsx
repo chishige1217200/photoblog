@@ -51,7 +51,7 @@ export default function UploadPhoto() {
           JSON API 呼び出し
         </h2>
         <button
-          className="font-medium text-zinc-950 dark:text-zinc-50 border-2 px-3 py-1 rounded-2xl border-zinc-300 dark:border-zinc-700"
+          className="font-medium text-zinc-950 dark:text-zinc-50 border-2 px-3 py-1 rounded-full border-zinc-300 dark:border-zinc-700"
           onClick={callJsonApi}
         >
           JSON API を呼び出す
@@ -69,7 +69,7 @@ export default function UploadPhoto() {
         />
         <br />
         <button
-          className="font-medium text-zinc-950 dark:text-zinc-50 border-2 px-3 py-1 rounded-2xl border-zinc-300 dark:border-zinc-700"
+          className="font-medium text-zinc-950 dark:text-zinc-50 border-2 px-3 py-1 rounded-full border-zinc-300 dark:border-zinc-700"
           onClick={uploadFile}
         >
           アップロード

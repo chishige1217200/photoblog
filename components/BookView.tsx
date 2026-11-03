@@ -59,10 +59,10 @@ export default function BookView({ id }: Props) {
         )}
         {(book.isOwner || book.isCollaborator) && (
           <HStack gap="2" mt="3">
-            <Button asChild size="sm" colorPalette="blue" borderRadius="full">
+            <Button asChild size="sm" colorPalette="blue">
               <Link href={`/book/edit/${id}`}>編集する</Link>
             </Button>
-            <Button asChild size="sm" variant="outline" borderRadius="full">
+            <Button asChild size="sm" variant="outline">
               <Link href={`/book/edit/${id}?tab=photos&add=1`}>
                 フォトを追加
               </Link>
