@@ -1,5 +1,9 @@
 import { getUserSession } from "@/lib/sessionManager";
-import { CmsBooks, convertToBooks } from "@/types/microCMS/book";
+import {
+  CmsBooks,
+  convertToBooks,
+  isAllowedUser,
+} from "@/types/microCMS/book";
 import { NextRequest } from "next/server";
 
 export async function GET(_req: NextRequest) {
@@ -13,13 +17,19 @@ export async function GET(_req: NextRequest) {
   const searchParams = _req.nextUrl.searchParams;
   const limit = (searchParams.get("limit") as string) || undefined;
   const offset = (searchParams.get("offset") as string) || undefined;
+  // scope=all の場合、閲覧権限のあるブック全てを返す
+  const includeViewable = searchParams.get("scope") === "all";
 
   console.log("limit: ", limit);
   console.log("offset: ", offset);
 
+  const filters = includeViewable
+    ? ""
+    : `filters=ownerUserId[equals]${session.user?.email}&`;
+
   // microCMSからデータを取得
   const res = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/book?filters=ownerUserId[equals]${session.user?.email}&orders=-updatedAt&limit=${limit}&offset=${offset}`,
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/book?${filters}orders=-updatedAt&limit=${limit}&offset=${offset}`,
     {
       method: "GET",
       headers: {
@@ -33,6 +43,14 @@ export async function GET(_req: NextRequest) {
   }
 
   const data = (await res.json()) as CmsBooks;
+
+  // 閲覧権限のあるブックのみに絞り込む
+  if (includeViewable) {
+    const email = session.user?.email ?? "";
+    data.contents = data.contents.filter(
+      (book) => !book.isPrivate || isAllowedUser(book, email),
+    );
+  }
 
   const response = convertToBooks(data, session.user?.email ?? "");
 

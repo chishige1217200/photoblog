@@ -6,13 +6,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export default function Bookshelf() {
+type Props = {
+  // "all" の場合、自分自身のブックだけでなく閲覧権限のあるブック全てを表示する
+  scope?: "own" | "all";
+};
+
+export default function Bookshelf({ scope = "own" }: Props) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBooks = async () => {
-      const res = await fetch("/api/book/search?limit=100");
+      const scopeParam = scope === "all" ? "&scope=all" : "";
+      const res = await fetch(`/api/book/search?limit=100${scopeParam}`);
       if (res.ok) {
         const data = (await res.json()) as { contents: Book[] };
         setBooks(data.contents);
@@ -20,7 +26,7 @@ export default function Bookshelf() {
       setLoading(false);
     };
     fetchBooks();
-  }, []);
+  }, [scope]);
 
   return (
     <div className="bookshelf">

@@ -1,6 +1,7 @@
 import { signOut } from "@/auth";
 import { getUserSession } from "@/lib/sessionManager";
 import PageNav from "@/components/PageNav";
+import Bookshelf from "@/components/BookShelf";
 
 export default async function Home() {
   const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === "true";
@@ -30,6 +31,9 @@ export default async function Home() {
             </form>
           </div>
           <PageNav />
+          <div className="w-full">
+            <Bookshelf scope="all" />
+          </div>
         </div>
       ) : (
         <></>
