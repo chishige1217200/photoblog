@@ -138,7 +138,7 @@ export default function PhotoBoard() {
                   <Button
                     asChild
                     size="xs"
-                    variant="outline"
+                    variant="solid"
                     colorPalette="gray"
                   >
                     <Link href={`/photo/edit/${photo.id}`}>編集</Link>
@@ -146,7 +146,7 @@ export default function PhotoBoard() {
                   <Button
                     size="xs"
                     colorPalette="red"
-                    variant="outline"
+                    variant="solid"
                     loading={deletingPhotoId === photo.id}
                     onClick={() => handleDeletePhoto(photo.id)}
                   >
