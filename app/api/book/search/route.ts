@@ -1,3 +1,4 @@
+import { buildAllScopeFilters, parseVisibility } from "@/lib/bookVisibility";
 import { getUserSession } from "@/lib/sessionManager";
 import { parseKeyword, parseLimit, parseOffset } from "@/lib/searchParams";
 import { CmsBooks, convertToBooks } from "@/types/microCMS/book";
@@ -20,9 +21,13 @@ export async function GET(_req: NextRequest) {
   const includeViewable = searchParams.get("scope") === "all";
 
   const email = session.user?.email ?? "";
+  // 公開条件（ホーム画面の scope=all で絞り込み可能）
+  const visibilities = includeViewable
+    ? parseVisibility(searchParams)
+    : [];
   // scope=all の場合は「公開中 or 自分自身 or 限定公開リストに含まれる」ブックのみをmicroCMS側で絞り込む
   const filters = includeViewable
-    ? `(isPrivate[not_exists][or]isPrivate[not_equals]true[or]ownerUserId[equals]${email}[or]allowUserIds[contains]${email})`
+    ? buildAllScopeFilters(email, visibilities)
     : `ownerUserId[equals]${email}`;
 
   // microCMSからデータを取得

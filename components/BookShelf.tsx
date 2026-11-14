@@ -5,12 +5,22 @@ import { Book, Books } from "@/types/PhotoBlog/book";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import SearchToolbar from "./SearchToolbar";
+import SearchToolbar, { type FilterOption } from "./SearchToolbar";
+import {
+  BOOK_VISIBILITY_LABELS,
+  BOOK_VISIBILITY_OPTIONS,
+  type BookVisibility,
+} from "@/lib/bookVisibility";
 
 type Props = {
   // "all" の場合、自分自身のブックだけでなく閲覧権限のあるブック全てを表示する
   scope?: "own" | "all";
 };
+
+/** ホーム画面（scope=all）で表示する公開条件の絞り込み項目 */
+const VISIBILITY_FILTER_OPTIONS: FilterOption[] = BOOK_VISIBILITY_OPTIONS.map(
+  (value) => ({ value, label: BOOK_VISIBILITY_LABELS[value] }),
+);
 
 export default function Bookshelf({ scope = "own" }: Props) {
   const [books, setBooks] = useState<Book[]>([]);
@@ -21,6 +31,8 @@ export default function Bookshelf({ scope = "own" }: Props) {
   const [keyword, setKeyword] = useState("");
   const [limit, setLimit] = useState(12);
   const [page, setPage] = useState(1);
+  // 公開条件（ホーム画面のみで絞り込み可能）
+  const [visibilities, setVisibilities] = useState<BookVisibility[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams({
@@ -28,7 +40,11 @@ export default function Bookshelf({ scope = "own" }: Props) {
       offset: String((page - 1) * limit),
     });
     if (keyword) params.set("q", keyword);
-    if (scope === "all") params.set("scope", "all");
+    if (scope === "all") {
+      params.set("scope", "all");
+      if (visibilities.length > 0)
+        params.set("visibility", visibilities.join(","));
+    }
     let cancelled = false;
     fetch(`/api/book/search?${params.toString()}`)
       .then((res) => (res.ok ? (res.json() as Promise<Books>) : null))
@@ -46,7 +62,7 @@ export default function Bookshelf({ scope = "own" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [scope, keyword, limit, page]);
+  }, [scope, keyword, limit, page, visibilities]);
 
   return (
     <>
@@ -68,6 +84,13 @@ export default function Bookshelf({ scope = "own" }: Props) {
         limit={limit}
         page={page}
         placeholder="タイトルやサブタイトルで絞り込み"
+        filterOptions={scope === "all" ? VISIBILITY_FILTER_OPTIONS : undefined}
+        filterLabel="公開条件"
+        filterValue={visibilities}
+        onFilterChange={(next) => {
+          setLoading(true);
+          setVisibilities(next as BookVisibility[]);
+        }}
       />
       <div className="bookshelf">
         <Link href={`/book/edit`} className="book-item">

@@ -3,6 +3,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   HStack,
   Input,
   NativeSelectField,
@@ -19,6 +20,12 @@ import { useState } from "react";
 /** 検索件数（1ページあたり）の選択肢 */
 export const LIMIT_OPTIONS = [12, 24, 50, 100] as const;
 
+/** 絞り込み項目（チェックボックスで複数選択できる条件） */
+export type FilterOption = {
+  value: string;
+  label: string;
+};
+
 type Props = {
   /** 検索キーワードの確定時に呼ばれる */
   onSearch: (keyword: string) => void;
@@ -34,6 +41,14 @@ type Props = {
   page: number;
   /** キーワード入力欄のプレースホルダ */
   placeholder?: string;
+  /** 公開条件などの追加絞り込み項目（未指定なら表示しない） */
+  filterOptions?: FilterOption[];
+  /** 絞り込み項目のラベル */
+  filterLabel?: string;
+  /** 選択中の絞り込み値 */
+  filterValue?: string[];
+  /** 絞り込み変更時に呼ばれる */
+  onFilterChange?: (value: string[]) => void;
 };
 
 /**
@@ -47,12 +62,25 @@ export default function SearchToolbar({
   limit,
   page,
   placeholder = "キーワードで絞り込み",
+  filterOptions,
+  filterLabel = "絞り込み",
+  filterValue = [],
+  onFilterChange,
 }: Props) {
   const [keyword, setKeyword] = useState("");
 
   // 検索件数変更時は1ページ目に戻る
   const handleLimitChange = (nextLimit: number) => {
     onLimitChange(nextLimit);
+    onPageChange(1);
+  };
+
+  const toggleFilter = (value: string, checked: boolean) => {
+    if (!onFilterChange) return;
+    const next = checked
+      ? [...filterValue, value]
+      : filterValue.filter((item) => item !== value);
+    onFilterChange(next);
     onPageChange(1);
   };
 
@@ -93,11 +121,39 @@ export default function SearchToolbar({
             onClick={() => {
               setKeyword("");
               onSearch("");
+              onFilterChange?.([]);
             }}
           >
             クリア
           </Button>
         </HStack>
+
+        {filterOptions && filterOptions.length > 0 && (
+          <HStack gap="3" align="center">
+            <Text fontSize="sm" color="white" whiteSpace="nowrap">
+              {filterLabel}
+            </Text>
+            <HStack gap="3" align="center">
+              {filterOptions.map((option) => (
+                <Checkbox.Root
+                  key={option.value}
+                  size="sm"
+                  value={option.value}
+                  checked={filterValue.includes(option.value)}
+                  onCheckedChange={(details) =>
+                    toggleFilter(option.value, details.checked === true)
+                  }
+                >
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label>{option.label}</Checkbox.Label>
+                  <Checkbox.HiddenInput />
+                </Checkbox.Root>
+              ))}
+            </HStack>
+          </HStack>
+        )}
 
         <HStack gap="2">
           <Text fontSize="sm" color="white" whiteSpace="nowrap">
