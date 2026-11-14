@@ -1,9 +1,6 @@
 import { getUserSession } from "@/lib/sessionManager";
-import {
-  CmsBooks,
-  convertToBooks,
-  isAllowedUser,
-} from "@/types/microCMS/book";
+import { parseKeyword, parseLimit, parseOffset } from "@/lib/searchParams";
+import { CmsBooks, convertToBooks } from "@/types/microCMS/book";
 import { NextRequest } from "next/server";
 
 export async function GET(_req: NextRequest) {
@@ -15,42 +12,42 @@ export async function GET(_req: NextRequest) {
     return new Response("MICROCMS_API_KEY is required", { status: 500 });
 
   const searchParams = _req.nextUrl.searchParams;
-  const limit = (searchParams.get("limit") as string) || undefined;
-  const offset = (searchParams.get("offset") as string) || undefined;
+  const limit = parseLimit(searchParams.get("limit"));
+  const offset = parseOffset(searchParams.get("offset"));
+  // キーワード検索（q）
+  const keyword = parseKeyword(searchParams.get("q"));
   // scope=all の場合、閲覧権限のあるブック全てを返す
   const includeViewable = searchParams.get("scope") === "all";
 
-  console.log("limit: ", limit);
-  console.log("offset: ", offset);
-
+  const email = session.user?.email ?? "";
+  // scope=all の場合は「公開中 or 自分自身 or 限定公開リストに含まれる」ブックのみをmicroCMS側で絞り込む
   const filters = includeViewable
-    ? ""
-    : `filters=ownerUserId[equals]${session.user?.email}&`;
+    ? `(isPrivate[not_exists][or]isPrivate[not_equals]true[or]ownerUserId[equals]${email}[or]allowUserIds[contains]${email})`
+    : `ownerUserId[equals]${email}`;
 
   // microCMSからデータを取得
-  const res = await fetch(
-    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/book?${filters}orders=-updatedAt&limit=${limit}&offset=${offset}`,
-    {
-      method: "GET",
-      headers: {
-        "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
-      },
-    },
+  const url = new URL(
+    `https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/book`,
   );
+  url.searchParams.set("filters", filters);
+  if (keyword) url.searchParams.set("q", keyword);
+  url.searchParams.set("orders", "-updatedAt");
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("offset", String(offset));
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "X-MICROCMS-API-KEY": process.env.MICROCMS_API_KEY!,
+    },
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     return new Response("Failed to fetch book data", { status: res.status });
   }
 
   const data = (await res.json()) as CmsBooks;
-
-  // 閲覧権限のあるブックのみに絞り込む
-  if (includeViewable) {
-    const email = session.user?.email ?? "";
-    data.contents = data.contents.filter(
-      (book) => !book.isPrivate || isAllowedUser(book, email),
-    );
-  }
 
   const response = convertToBooks(data, session.user?.email ?? "");
 
