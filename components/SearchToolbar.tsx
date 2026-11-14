@@ -111,6 +111,20 @@ export default function SearchToolbar({
               }
               bg="white"
               color="black"
+              // ネイティブドロップダウン（option一覧）をブラウザのダーク
+              // カラースキームに合わせず、常に明るい配色に固定する。
+              // Chakra の native-select recipe は option の背景をセマンティック
+              // トークン（bg）に設定するため、ダークモードでは黒になり、
+              // 文字色（黒）と重なって読めなくなる。
+              // css で option の色を明示的に白/黒へ上書きし、
+              // color-scheme: light でポップアップ自体もライト描画にする。
+              css={{
+                colorScheme: "light",
+                "& > option, & > optgroup": {
+                  bg: "white",
+                  color: "black",
+                },
+              }}
             >
               {LIMIT_OPTIONS.map((option) => (
                 <option key={option} value={String(option)}>
