@@ -112,15 +112,15 @@ export default function PhotoBoard() {
         page={page}
         placeholder="タイトルやキャプションで絞り込み"
       />
-      <div className="bookshelf">
+      <div className="photo-shelf">
         {loading ? (
-          <p className="title">読み込み中...</p>
+          <p className="photo-title">読み込み中...</p>
         ) : photos.length === 0 ? (
-          <p className="title">該当するフォトがありません</p>
+          <p className="photo-title">該当するフォトがありません</p>
         ) : (
           photos.map((photo) => (
-            <div key={photo.id} className="book-item">
-              <div className="book">
+            <div key={photo.id} className="photo-item">
+              <div className="photo">
                 {photo.photograph?.url ? (
                   <Image
                     src={photo.photograph.url}
@@ -129,10 +129,10 @@ export default function PhotoBoard() {
                     height={photo.photograph.height}
                   />
                 ) : (
-                  <div className="book" />
+                  <div className="photo" />
                 )}
               </div>
-              <p className="title">{photo.title ?? "無題"}</p>
+              <p className="photo-title">{photo.title ?? "無題"}</p>
               {photo.isOwner && (
                 <HStack gap="2" mt="2">
                   <Button
