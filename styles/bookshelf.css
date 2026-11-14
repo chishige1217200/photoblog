@@ -14,6 +14,10 @@
   );
   min-height: 100vh;
   align-items: flex-start;
+  /* min-height: 100vh で余った縦の余白が行間に分配されないようにする。
+     既定値（normal = stretch）だと flex-wrap した行同士が引き伸ばされ、
+     画面が高いほど行間が不自然に開く。 */
+  align-content: flex-start;
 }
 
 /* 1冊分 */
@@ -55,6 +59,9 @@
 /* タイトル */
 .title {
   margin-top: 10px;
+  /* p の既定 margin-bottom（16px 相当）が残ると、次の行の本までの距離だけ
+     不自然に大きく開くため、gap（32px）と同じ間隔に揃える。 */
+  margin-bottom: 0;
   font-size: 14px;
   text-align: center;
   font-weight: 600;
