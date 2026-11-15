@@ -1,0 +1,16 @@
+{
+  "name": "PhotoBlog",
+  "short_name": "PhotoBlog",
+  "description": "オンラインフォトブック",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/logo800.png",
+      "type": "image/png",
+      "sizes": "800x800"
+    }
+  ]
+}

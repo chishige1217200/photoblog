@@ -1,0 +1,78 @@
+/* 背景を木目風に */
+.photo-shelf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 40px;
+
+  background: repeating-linear-gradient(
+    0deg,
+    #a47148,
+    #a47148 10px,
+    #8d5a3b 10px,
+    #8d5a3b 20px
+  );
+  align-items: flex-start;
+  /* 縦の余白が行間に分配されないようにする。
+     既定値（normal = stretch）だと flex-wrap した行同士が引き伸ばされ、
+     画面が高いほど行間が不自然に開く。 */
+  align-content: flex-start;
+  /* 高さはページ側の flex 列（min-h-dvh）の残り領域で決める。
+     min-height: 100vh を指定すると、ナビやツールバーの分だけ文書が
+     ビューポートより長くなり、コンテンツが少なくても縦スクロールバーが
+     出てしまう。 */
+  flex: 1 0 auto;
+}
+
+/* 1枚分 */
+.photo-item {
+  text-decoration: none;
+  color: #222;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* フォト（カード） */
+.photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* フォト画像 */
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ホバー効果 */
+/* .photo-item:hover .photo {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
+} */
+
+/* タイトル */
+.photo-title {
+  /* 背景はダークモードでも #eee（明るいまま）なので、文字色は常に黒にして
+     本文の foreground（ダークモードではほぼ白）を継承させない。 */
+  color: #222;
+  margin-top: 10px;
+  /* p の既定 margin-bottom（16px 相当）が残ると、次の行の写真までの距離だけ
+     不自然に大きく開くため、gap（32px）と同じ間隔に揃える。 */
+  margin-bottom: 0;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 600;
+  background: #eee;
+  padding: 6px;
+  border-radius: 12px;
+}
