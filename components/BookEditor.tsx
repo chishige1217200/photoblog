@@ -333,9 +333,12 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
               </Field.Root>
 
               <Field.Root>
+                {/* blurBehavior="add": 入力途中のテキストはEnterを押さずに画面遷移（保存ボタンクリック等）すると
+                    破棄されるため、フォーカスが外れた時点でタグとして確定させる */}
                 <TagsInput.Root
                   value={editors}
                   onValueChange={(e) => setEditors(e.value)}
+                  blurBehavior="add"
                 >
                   <TagsInput.Label>
                     共同編集対象ユーザID（メールアドレス）
@@ -357,6 +360,7 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
                   value={viewers}
                   onValueChange={(e) => setViewers(e.value)}
                   disabled={!isPrivate}
+                  blurBehavior="add"
                 >
                   <TagsInput.Label>
                     限定公開対象ユーザID（メールアドレス）
