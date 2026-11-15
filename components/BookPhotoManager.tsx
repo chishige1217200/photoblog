@@ -7,19 +7,22 @@ import { useEffect, useRef, useState } from "react";
 import {
   HiArrowDown,
   HiArrowUp,
+  HiCheck,
   HiMenuAlt4,
   HiPencil,
   HiPlus,
   HiSave,
   HiTrash,
 } from "react-icons/hi";
+import { LuX } from "react-icons/lu";
 import {
+  Box,
   Button,
   Dialog,
   Field,
   FileUpload,
   HStack,
-  Input,
+  Progress,
   SegmentGroupRoot,
   SegmentGroupItem,
   SegmentGroupItemHiddenInput,
@@ -28,6 +31,7 @@ import {
   Skeleton,
   Span,
   Text,
+  useFileUpload,
   VStack,
 } from "@chakra-ui/react";
 import { toaster } from "./ui/toaster";
@@ -40,6 +44,9 @@ const GRID_THUMB_SIZE = 400;
 
 // フォト選択ピッカーは minmax(9rem, 1fr) のグリッド（1セルあたり約 150〜200px）。
 const PICKER_THUMB_SIZE = 320;
+
+// 一括アップロードで 1 回のダイアログ操作から追加できる最大枚数
+const MAX_UPLOAD_FILES = 50;
 
 type AddMode = "upload" | "existing";
 
@@ -405,15 +412,35 @@ function AddPhotoDialog({
   onAdded: () => void;
 }) {
   const [mode, setMode] = useState<AddMode>("upload");
-  const [file, setFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [caption, setCaption] = useState("");
-  const [shotAt, setShotAt] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 });
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photosLoading, setPhotosLoading] = useState(false);
-  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // 複数選択を有効化し、選択・削除・クリアのいずれでも files 状態へ同期する
+  const fileUpload = useFileUpload({
+    accept: ["image/*"],
+    maxFiles: MAX_UPLOAD_FILES,
+    onFileChange(details) {
+      setFiles(details.acceptedFiles);
+    },
+    onFileReject(details) {
+      if (details.files.length === 0) return;
+      const reason = details.files[0].errors[0];
+      toaster.create({
+        title:
+          reason === "FILE_INVALID_TYPE"
+            ? "画像ファイルのみ選択できます"
+            : `一度に追加できるのは ${MAX_UPLOAD_FILES} 枚までです`,
+        type: "error",
+        closable: true,
+      });
+    },
+  });
 
   useEffect(() => {
     if (!open || mode !== "existing" || photos.length > 0) return;
@@ -451,79 +478,114 @@ function AddPhotoDialog({
   );
 
   const reset = () => {
-    setFile(null);
-    setPreviewImage(null);
-    setTitle("");
-    setCaption("");
-    setShotAt("");
-    setSelectedPhotoId(null);
+    fileUpload.clearFiles();
+    setFiles([]);
+    setSelectedPhotoIds(new Set());
+    setProgress({ done: 0, total: 0, failed: 0 });
+  };
+
+  // ファイル名（拡張子を除く部分）をタイトルとして使う
+  const deriveTitle = (filename: string) =>
+    filename.replace(/\.[^.]+$/, "").trim();
+
+  const togglePhoto = (photoId: string) => {
+    setSelectedPhotoIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(photoId)) {
+        next.delete(photoId);
+      } else {
+        next.add(photoId);
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (mode === "upload" && !file) {
+    const targets =
+      mode === "upload"
+        ? files.map((file) => ({
+            label: file.name,
+            formData: () => {
+              const formData = new FormData();
+              formData.append("file", file);
+              const derived = deriveTitle(file.name);
+              if (derived) formData.append("title", derived);
+              return formData;
+            },
+          }))
+        : Array.from(selectedPhotoIds).map((photoId) => ({
+            label: photoId,
+            formData: () => {
+              const formData = new FormData();
+              formData.append("photoId", photoId);
+              return formData;
+            },
+          }));
+
+    if (targets.length === 0) {
       toaster.create({
         title: "エラー",
-        description: "フォトを選択してください。",
-        type: "error",
-        closable: true,
-      });
-      return;
-    }
-    if (mode === "existing" && !selectedPhotoId) {
-      toaster.create({
-        title: "エラー",
-        description: "追加するフォトを選択してください。",
+        description:
+          mode === "upload"
+            ? "フォトを選択してください。"
+            : "追加するフォトを選択してください。",
         type: "error",
         closable: true,
       });
       return;
     }
 
-    const formData = new FormData();
-    if (mode === "upload") {
-      formData.append("file", file!);
-      if (title) formData.append("title", title);
-      if (caption) formData.append("caption", caption);
-      if (shotAt) formData.append("shotAt", shotAt);
-    } else {
-      formData.append("photoId", selectedPhotoId!);
-    }
-
+    // 1 枚ずつ既存 API へ順に送信する（サーバー側の一括対応は不要）
     setLoading(true);
-    try {
-      const res = await fetch(`/api/book/${bookId}/photo`, {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        toaster.create({
-          title: "フォトを追加しました",
-          type: "success",
-          closable: true,
+    setProgress({ done: 0, total: targets.length, failed: 0 });
+    let failed = 0;
+    const failedLabels: string[] = [];
+    for (let i = 0; i < targets.length; i += 1) {
+      try {
+        const res = await fetch(`/api/book/${bookId}/photo`, {
+          method: "POST",
+          body: targets[i].formData(),
         });
-        reset();
-        onAdded();
-      } else {
-        const error = await res.text();
-        toaster.create({
-          title: "追加に失敗しました",
-          description: error,
-          type: "error",
-          closable: true,
-        });
+        if (!res.ok) {
+          failed += 1;
+          failedLabels.push(targets[i].label);
+        }
+      } catch (err) {
+        console.error(err);
+        failed += 1;
+        failedLabels.push(targets[i].label);
       }
-    } catch (err) {
-      console.error(err);
+      setProgress({ done: i + 1, total: targets.length, failed });
+    }
+
+    const succeeded = targets.length - failed;
+    if (failed === 0) {
       toaster.create({
-        title: "エラーが発生しました",
+        title: `${succeeded} 枚のフォトを追加しました`,
+        type: "success",
+        closable: true,
+      });
+    } else if (succeeded > 0) {
+      toaster.create({
+        title: `${succeeded} 枚追加し、${failed} 枚追加できませんでした`,
+        description: failedLabels.slice(0, 3).join("、"),
+        type: "warning",
+        closable: true,
+      });
+    } else {
+      toaster.create({
+        title: "フォトを追加できませんでした",
+        description: failedLabels.slice(0, 3).join("、"),
         type: "error",
         closable: true,
       });
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
+    reset();
+    onAdded();
   };
 
   return (
@@ -532,6 +594,8 @@ function AddPhotoDialog({
       placement="top"
       open={open}
       onOpenChange={(e) => {
+        // アップロード中は誤って閉じられないようにする
+        if (loading && !e.open) return;
         onOpenChange(e.open);
         if (!e.open) reset();
       }}
@@ -568,76 +632,105 @@ function AddPhotoDialog({
                 </Field.Root>
 
                 {mode === "upload" && (
-                  <>
-                    <Field.Root>
-                      <FileUpload.Root
-                        accept={["image/*"]}
-                        onFileChange={(e) => {
-                          const files = e.acceptedFiles;
-                          if (files && files.length > 0) {
-                            setFile(files[0]);
-                            setPreviewImage(URL.createObjectURL(files[0]));
-                          }
+                  <Field.Root>
+                    <Field.Label>フォト</Field.Label>
+                    <FileUpload.RootProvider value={fileUpload}>
+                      <FileUpload.HiddenInput />
+                      <Field.HelperText>
+                        ドラッグ＆ドロップまたはクリックで複数選択できます（最大{" "}
+                        {MAX_UPLOAD_FILES} 枚）。タイトルはファイル名から付けられます。
+                      </Field.HelperText>
+                      <FileUpload.Dropzone
+                        css={{
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "0.5rem",
+                          p: 6,
                         }}
                       >
-                        <Field.Label>フォト</Field.Label>
-                        <FileUpload.HiddenInput />
-                        <FileUpload.Trigger asChild>
-                          <Button variant="outline" size="sm">
-                            フォトを選択する
-                          </Button>
-                        </FileUpload.Trigger>
-                        <Field.HelperText>フォトプレビュー</Field.HelperText>
-                        {previewImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={previewImage}
-                            alt="Preview"
-                            className="w-full rounded-md"
-                          />
-                        ) : (
-                          <Skeleton className="w-full aspect-4/3" />
-                        )}
-                      </FileUpload.Root>
-                    </Field.Root>
+                        <FileUpload.DropzoneContent>
+                          <Box fontSize="sm" color="fg.muted">
+                            ここにフォトをドラッグ＆ドロップ、
+                            <br />
+                            またはクリックしてファイルを選択
+                          </Box>
+                        </FileUpload.DropzoneContent>
+                      </FileUpload.Dropzone>
 
-                    <Field.Root orientation="horizontal">
-                      <Field.Label>タイトル</Field.Label>
-                      <Input
-                        placeholder="タイトルを入力してください。"
-                        flex="1"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
-                    </Field.Root>
-
-                    <Field.Root orientation="horizontal">
-                      <Field.Label>キャプション</Field.Label>
-                      <Input
-                        placeholder="キャプションを入力してください。"
-                        flex="1"
-                        value={caption}
-                        onChange={(e) => setCaption(e.target.value)}
-                      />
-                    </Field.Root>
-
-                    <Field.Root orientation="horizontal">
-                      <Field.Label>撮影日</Field.Label>
-                      <Input
-                        type="date"
-                        flex="1"
-                        value={shotAt}
-                        onChange={(e) => setShotAt(e.target.value)}
-                      />
-                    </Field.Root>
-                  </>
+                      <FileUpload.ItemGroup
+                        css={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(7rem, 1fr))",
+                          gap: "0.75rem",
+                          pt: 4,
+                        }}
+                      >
+                        {files.map((file) => (
+                          <FileUpload.Item
+                            key={file.name}
+                            file={file}
+                            css={{
+                              flexDirection: "column",
+                              alignItems: "stretch",
+                              gap: "0.25rem",
+                              p: 2,
+                            }}
+                          >
+                            <Box
+                              position="relative"
+                              borderRadius="md"
+                              overflow="hidden"
+                              bg="bg.muted"
+                            >
+                              <FileUpload.ItemPreviewImage
+                                css={{
+                                  width: "100%",
+                                  aspectRatio: "4 / 3",
+                                  objectFit: "cover",
+                                  display: "block",
+                                }}
+                              />
+                              <FileUpload.ItemDeleteTrigger
+                                asChild
+                                position="absolute"
+                                top="0.25rem"
+                                right="0.25rem"
+                              >
+                                <Button
+                                  variant="solid"
+                                  colorPalette="red"
+                                  size="2xs"
+                                  aria-label={`${file.name} を削除`}
+                                >
+                                  <LuX size={12} />
+                                </Button>
+                              </FileUpload.ItemDeleteTrigger>
+                            </Box>
+                            <FileUpload.ItemName
+                              css={{
+                                fontSize: "0.75rem",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            />
+                          </FileUpload.Item>
+                        ))}
+                      </FileUpload.ItemGroup>
+                    </FileUpload.RootProvider>
+                  </Field.Root>
                 )}
 
                 {mode === "existing" && (
                   <Field.Root>
                     <Field.Label>フォト</Field.Label>
                     <Field.HelperText>
-                      追加したいフォトを選択してください。
+                      追加したいフォトを複数選択できます
+                      {selectedPhotoIds.size > 0
+                        ? `（${selectedPhotoIds.size} 枚選択中）`
+                        : ""}
+                      。
                     </Field.HelperText>
                     {photosLoading ? (
                       <Skeleton className="w-full h-40" />
@@ -647,9 +740,9 @@ function AddPhotoDialog({
                           <button
                             key={photo.id}
                             type="button"
-                            onClick={() => setSelectedPhotoId(photo.id)}
-                            className={`overflow-hidden rounded-lg border-2 ${
-                              selectedPhotoId === photo.id
+                            onClick={() => togglePhoto(photo.id)}
+                            className={`relative overflow-hidden rounded-lg border-2 ${
+                              selectedPhotoIds.has(photo.id)
                                 ? "border-blue-500"
                                 : "border-zinc-200 dark:border-zinc-700"
                             }`}
@@ -663,6 +756,11 @@ function AddPhotoDialog({
                               alt={photo.title ?? ""}
                               className="aspect-square w-full object-cover"
                             />
+                            {selectedPhotoIds.has(photo.id) && (
+                              <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white">
+                                <HiCheck size={12} />
+                              </span>
+                            )}
                             <span className="block truncate bg-black/50 px-1 py-0.5 text-xs text-white">
                               {photo.title ?? "無題"}
                             </span>
@@ -678,12 +776,39 @@ function AddPhotoDialog({
                 )}
 
                 <HStack justify="flex-end" gap="2" pt="2">
+                  {loading && (
+                    <HStack gap="3" flex="1" justify="flex-end">
+                      <Progress.Root
+                        value={progress.done}
+                        max={progress.total}
+                        size="sm"
+                        width="40"
+                      >
+                        <Progress.Track>
+                          <Progress.Range />
+                        </Progress.Track>
+                        <Progress.ValueText>
+                          {progress.done}/{progress.total} 枚
+                          {progress.failed > 0 ? `（失敗 ${progress.failed}）` : ""}
+                        </Progress.ValueText>
+                      </Progress.Root>
+                    </HStack>
+                  )}
                   <Dialog.CloseTrigger asChild>
-                    <Button variant="ghost" type="button">
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      disabled={loading}
+                    >
                       キャンセル
                     </Button>
                   </Dialog.CloseTrigger>
-                  <Button type="submit" loading={loading} colorPalette="blue">
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    disabled={loading}
+                    colorPalette="blue"
+                  >
                     <HiPlus /> フォトを追加
                   </Button>
                 </HStack>
