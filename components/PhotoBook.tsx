@@ -11,6 +11,8 @@ type Props = {
   book?: Book;
   width?: number;
   height?: number;
+  // 縦長の画面では単ページ表示になる。その場合はコンテナ幅が1ページ分で足りる。
+  portrait?: boolean;
 };
 
 const formatDate = (dateStr?: string) => {
@@ -26,6 +28,7 @@ const PhotoBook: React.FC<Props> = ({
   book,
   width = 450,
   height = 650,
+  portrait = false,
 }) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
@@ -53,25 +56,38 @@ const PhotoBook: React.FC<Props> = ({
     ) as HTMLElement[];
     if (pages.length === 0) return;
 
-    // 両開き（2ページ）を表示するには、コンテナの実効幅が「1ページ分の幅 × 2」以上
-    // でなければならない。呼び出し側は window.innerWidth（スクロールバー込み）から
-    // 幅を計算するため、実測した配置領域より常に数px足りず、page-flip が単ページの
-    // 縦表示（portrait）へ落ちていた。配置領域の実測値から1ページ分のサイズを決め直す。
+    // page-flip はコンテナ（stf__parent）の幅を測って見開き/単ページを決める。
+    // コンテナの実効幅が「1ページ分の幅 × 2」でないと単ページの縦表示へ落ちるため、
+    // 実測した配置領域から1ページ分のサイズを決め、コンテナ幅を見開き分へ広げる。
     const parent = container.parentElement;
-    let measured = 0;
+    let measuredWidth = 0;
+    let measuredHeight = 0;
     if (parent) {
       const parentStyle = getComputedStyle(parent);
-      measured =
-        parent.getBoundingClientRect().width -
+      const rect = parent.getBoundingClientRect();
+      measuredWidth =
+        rect.width -
         (parseFloat(parentStyle.paddingLeft) || 0) -
         (parseFloat(parentStyle.paddingRight) || 0);
+      measuredHeight =
+        rect.height -
+        (parseFloat(parentStyle.paddingTop) || 0) -
+        (parseFloat(parentStyle.paddingBottom) || 0);
     }
-    const availableWidth = measured > 0 ? Math.floor(measured) : width * 2;
+
+    // 1ページ分の縦横比は呼び出し側が渡した寸法から決まる。
+    // ページ高さは「ページ幅 × (1 / 縦横比)」なので、高さ制限から逆算した幅の上限は
+    // 「実測高さ × 縦横比」になる。
+    // 単ページ表示では幅の制限が 1ページ分なので、見開きより大きくできる。
+    const aspect = width / height;
+    const spread = portrait ? 1 : 2;
+    const limitWidth = measuredWidth > 0 ? measuredWidth / spread : width;
+    const limitHeight = measuredHeight > 0 ? measuredHeight * aspect : height;
     const pageWidth = Math.max(
       1,
-      Math.min(width, Math.floor(availableWidth / 2)),
+      Math.floor(Math.min(width, limitWidth, limitHeight)),
     );
-    const pageHeight = Math.max(1, Math.round((pageWidth * height) / width));
+    const pageHeight = Math.max(1, Math.round(pageWidth / aspect));
 
     // page-flip はコンテナへ自前のノードを注入し、React が描画したページを内部へ移動し、
     // クラスやスタイルを書き換える。破棄時に元へ戻すため、変更前を控えておく。
@@ -121,7 +137,7 @@ const PhotoBook: React.FC<Props> = ({
         else page.setAttribute("style", style);
       }
     };
-  }, [ready, photos, width, height]);
+  }, [ready, photos, width, height, portrait]);
 
   const renderCover = () => {
     const thumbnail = book?.thumbnail;

@@ -1,4 +1,3 @@
-import BackLink from "@/components/BackLink";
 import BookView from "@/components/BookView";
 
 type Props = {
@@ -7,10 +6,5 @@ type Props = {
 
 export default async function BookPage({ params }: Props) {
   const { id } = await params;
-  return (
-    <>
-      <BackLink href="/book" label="ブック一覧へ戻る" />
-      <BookView id={id} />
-    </>
-  );
+  return <BookView id={id} />;
 }
