@@ -630,7 +630,7 @@ function AddPhotoDialog({
                     {photosLoading ? (
                       <Skeleton className="w-full h-40" />
                     ) : selectablePhotos.length > 0 ? (
-                      <div className="grid max-h-80 w-full grid-cols-3 gap-2 overflow-y-auto">
+                      <div className="grid max-h-80 w-full auto-rows-max grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 overflow-y-auto">
                         {selectablePhotos.map((photo) => (
                           <button
                             key={photo.id}

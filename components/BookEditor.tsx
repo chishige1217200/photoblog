@@ -452,7 +452,7 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
                 {photosLoading ? (
                   <Skeleton className="w-full h-40" />
                 ) : photos.length > 0 ? (
-                  <div className="grid max-h-80 w-full grid-cols-2 gap-2 overflow-y-auto">
+                  <div className="grid max-h-80 w-full auto-rows-max grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 overflow-y-auto">
                     {photos.map((photo) => (
                       <button
                         key={photo.id}
