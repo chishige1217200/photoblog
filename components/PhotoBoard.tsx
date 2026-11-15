@@ -7,6 +7,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import SearchToolbar from "./SearchToolbar";
 import { toaster } from "./ui/toaster";
+import { cmsThumbUrl } from "@/lib/microcmsImage";
+
+// カードは 160px 幅・aspect-ratio 4/3（styles/photoboard.css）。
+// 2 倍 DPR まで考慮したサイズを CDN 側に生成させ、元画像の読み込みを避ける。
+const PHOTO_THUMB_WIDTH = 320;
+const PHOTO_THUMB_HEIGHT = 240;
 
 export default function PhotoBoard() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -123,10 +129,13 @@ export default function PhotoBoard() {
               <div className="photo">
                 {photo.photograph?.url ? (
                   <Image
-                    src={photo.photograph.url}
+                    src={cmsThumbUrl(photo.photograph.url, PHOTO_THUMB_WIDTH, {
+                      height: PHOTO_THUMB_HEIGHT,
+                    })}
                     alt={photo.title ?? ""}
-                    width={photo.photograph.width}
-                    height={photo.photograph.height}
+                    width={PHOTO_THUMB_WIDTH}
+                    height={PHOTO_THUMB_HEIGHT}
+                    unoptimized
                   />
                 ) : (
                   <div className="photo" />

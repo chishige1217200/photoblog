@@ -21,6 +21,7 @@ import {
 import { toaster } from "./ui/toaster";
 import BookEditor from "./BookEditor";
 import BookPhotoManager from "./BookPhotoManager";
+import { cmsThumbUrl } from "@/lib/microcmsImage";
 
 type Props = {
   id: string;
@@ -139,11 +140,12 @@ export default function BookWorkspace({
         <div className="flex items-center gap-3">
           {book?.thumbnail?.url ? (
             <Image
-              src={book.thumbnail.url}
+              src={cmsThumbUrl(book.thumbnail.url, 144, { height: 192 })}
               alt={book.title ?? ""}
-              width={72}
-              height={96}
+              width={144}
+              height={192}
               className="h-24 w-18 rounded-md object-cover"
+              unoptimized
             />
           ) : (
             <Skeleton h="24" w="18" borderRadius="md" />

@@ -11,6 +11,12 @@ import {
   BOOK_VISIBILITY_OPTIONS,
   type BookVisibility,
 } from "@/lib/bookVisibility";
+import { cmsThumbUrl } from "@/lib/microcmsImage";
+
+// 表紙は 160px 幅・aspect-ratio 2/3（styles/bookshelf.css）。
+// 2 倍 DPR まで考慮したサイズを CDN 側に生成させ、元画像の読み込みを避ける。
+const BOOK_THUMB_WIDTH = 320;
+const BOOK_THUMB_HEIGHT = 480;
 
 type Props = {
   // "all" の場合、自分自身のブックだけでなく閲覧権限のあるブック全てを表示する
@@ -113,10 +119,13 @@ export default function Bookshelf({ scope = "own" }: Props) {
               <div className="book">
                 {book.thumbnail?.url ? (
                   <Image
-                    src={book.thumbnail.url}
+                    src={cmsThumbUrl(book.thumbnail.url, BOOK_THUMB_WIDTH, {
+                      height: BOOK_THUMB_HEIGHT,
+                    })}
                     alt={book.title ?? ""}
-                    width={book.thumbnail.width}
-                    height={book.thumbnail.height}
+                    width={BOOK_THUMB_WIDTH}
+                    height={BOOK_THUMB_HEIGHT}
+                    unoptimized
                   />
                 ) : (
                   <Box position="relative" h="100%">

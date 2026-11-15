@@ -25,6 +25,9 @@ import { toaster } from "./ui/toaster";
 import { Lens } from "./ui/lens";
 import { CmsBook, convertToList } from "@/types/microCMS/book";
 import { Photo } from "@/types/PhotoBlog/photo";
+import { cmsSquareThumbUrl } from "@/lib/microcmsImage";
+
+const PICKER_THUMB_SIZE = 320;
 
 type ThumbnailMode = "upload" | "existing";
 
@@ -466,7 +469,10 @@ export default function BookEditor({ id, onSaved }: BookEditorProps) {
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={photo.photograph?.url ?? ""}
+                          src={cmsSquareThumbUrl(
+                            photo.photograph?.url ?? "",
+                            PICKER_THUMB_SIZE,
+                          )}
                           alt={photo.title ?? ""}
                           className="aspect-square w-full object-cover"
                         />

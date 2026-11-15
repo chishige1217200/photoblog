@@ -32,6 +32,14 @@ import {
 } from "@chakra-ui/react";
 import { toaster } from "./ui/toaster";
 import PhotoForm from "./PhotoForm";
+import { cmsSquareThumbUrl } from "@/lib/microcmsImage";
+
+// 並び替えグリッドは 2〜5 列（1セルあたり最大で約 215px 四方）。
+// 2 倍 DPR まで考慮した正方形サムネイルを CDN 側に生成させる。
+const GRID_THUMB_SIZE = 400;
+
+// フォト選択ピッカーは minmax(9rem, 1fr) のグリッド（1セルあたり約 150〜200px）。
+const PICKER_THUMB_SIZE = 320;
 
 type AddMode = "upload" | "existing";
 
@@ -243,11 +251,15 @@ export default function BookPhotoManager({
             >
               {photo.photograph?.url ? (
                 <Image
-                  src={photo.photograph.url}
+                  src={cmsSquareThumbUrl(
+                    photo.photograph.url,
+                    GRID_THUMB_SIZE,
+                  )}
                   alt={photo.title ?? ""}
-                  width={photo.photograph.width}
-                  height={photo.photograph.height}
+                  width={GRID_THUMB_SIZE}
+                  height={GRID_THUMB_SIZE}
                   className="aspect-square w-full object-cover"
+                  unoptimized
                 />
               ) : (
                 <div className="flex aspect-square items-center justify-center bg-zinc-100 text-2xl dark:bg-zinc-800">
@@ -644,7 +656,10 @@ function AddPhotoDialog({
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={photo.photograph?.url ?? ""}
+                              src={cmsSquareThumbUrl(
+                                photo.photograph?.url ?? "",
+                                PICKER_THUMB_SIZE,
+                              )}
                               alt={photo.title ?? ""}
                               className="aspect-square w-full object-cover"
                             />
