@@ -127,7 +127,7 @@ export default function BookWorkspace({
             : "このブックを編集する権限がありません。"}
         </p>
         <Button asChild size="sm" variant="outline">
-          <Link href="/book">ブック一覧へ戻る</Link>
+          <Link href="/book">&larr; ブック一覧</Link>
         </Button>
       </div>
     );
