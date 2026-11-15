@@ -67,7 +67,10 @@ const PhotoBook: React.FC<Props> = ({
         (parseFloat(parentStyle.paddingRight) || 0);
     }
     const availableWidth = measured > 0 ? Math.floor(measured) : width * 2;
-    const pageWidth = Math.max(1, Math.min(width, Math.floor(availableWidth / 2)));
+    const pageWidth = Math.max(
+      1,
+      Math.min(width, Math.floor(availableWidth / 2)),
+    );
     const pageHeight = Math.max(1, Math.round((pageWidth * height) / width));
 
     // page-flip はコンテナへ自前のノードを注入し、React が描画したページを内部へ移動し、
@@ -120,40 +123,47 @@ const PhotoBook: React.FC<Props> = ({
     };
   }, [ready, photos, width, height]);
 
-  const renderCover = () => (
-    <div className="page" data-density="hard">
-      <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
-        {book?.thumbnail?.url ? (
-          <div className="image-area">
-            <Image
-              src={book.thumbnail.url}
-              alt={book.title ?? ""}
-              width={book.thumbnail.width}
-              height={book.thumbnail.height}
-              loading="eager"
-            />
-          </div>
-        ) : (
-          <h2 className="text-center text-5xl text-gray-900">Page Cover</h2>
-        )}
-        {book?.title && (
-          <h3 className="mt-4 text-center text-2xl text-gray-900">
-            {book.title}
-          </h3>
-        )}
-        {book?.subTitle && (
-          <p className="mt-2 text-center text-lg text-gray-700">
-            {book.subTitle}
-          </p>
-        )}
-        {book?.author && (
-          <p className="mt-2 text-center text-sm text-gray-500">
-            著者: {book.author}
-          </p>
-        )}
+  const renderCover = () => {
+    const thumbnail = book?.thumbnail;
+    const isPortrait = !!thumbnail && thumbnail.height > thumbnail.width;
+
+    return (
+      <div className="page" data-density="hard">
+        <div
+          className={`photo-container ${
+            thumbnail?.url
+              ? isPortrait
+                ? "portrait"
+                : "landscape"
+              : "justify-center"
+          } text-zinc-950 dark:text-zinc-50`}
+        >
+          {thumbnail?.url && book ? (
+            <>
+              <div className="image-area">
+                <Image
+                  src={thumbnail.url}
+                  alt={book.title ?? ""}
+                  width={thumbnail.width}
+                  height={thumbnail.height}
+                  loading="eager"
+                />
+              </div>
+              <div className="info-area font-medium text-zinc-950 dark:text-zinc-50">
+                {book?.title && <h3 className="text-gray-900">{book.title}</h3>}
+                {book?.subTitle && (
+                  <p className="text-gray-700">{book.subTitle}</p>
+                )}
+                {book?.author && <p className="shotAt">著者: {book.author}</p>}
+              </div>
+            </>
+          ) : (
+            <h2 className="text-center text-5xl text-gray-900">Page Cover</h2>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div
