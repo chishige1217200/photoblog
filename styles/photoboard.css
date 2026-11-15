@@ -12,12 +12,16 @@
     #8d5a3b 10px,
     #8d5a3b 20px
   );
-  min-height: 100vh;
   align-items: flex-start;
-  /* min-height: 100vh で余った縦の余白が行間に分配されないようにする。
+  /* 縦の余白が行間に分配されないようにする。
      既定値（normal = stretch）だと flex-wrap した行同士が引き伸ばされ、
      画面が高いほど行間が不自然に開く。 */
   align-content: flex-start;
+  /* 高さはページ側の flex 列（min-h-dvh）の残り領域で決める。
+     min-height: 100vh を指定すると、ナビやツールバーの分だけ文書が
+     ビューポートより長くなり、コンテンツが少なくても縦スクロールバーが
+     出てしまう。 */
+  flex: 1 0 auto;
 }
 
 /* 1枚分 */
