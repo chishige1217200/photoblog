@@ -19,7 +19,7 @@ export type BookVisibility = (typeof BOOK_VISIBILITY_OPTIONS)[number];
 export const BOOK_VISIBILITY_LABELS: Record<BookVisibility, string> = {
   public: "全体公開",
   private: "限定公開",
-  own: "自分で作成したもの",
+  own: "自分で作成",
   collaborator: "共同編集者",
 };
 
