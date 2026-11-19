@@ -278,40 +278,113 @@
   color: rgba(242, 230, 214, 0.72);
 }
 
-/* レンズ（絞り）を模したエンブレム */
+/* ============================================================
+   レンズ・エンブレム（8枚の絞り羽根）
+
+   実際の絞りと同じ構造。各羽根は自分のピボットピンを軸に回転し、
+   --iris はその回転角（度）です。羽根が内側へ寄ると隣り合う刃先の
+   切り取り円がずれて正八角形の開口が開きます。
+     --iris: 0  → 完全閉 / 7 → ごく僅か / 26 → f/2.2 相当の大きな開口
+   page-flip は button 要素上のポインター操作をページめくりに
+   使わないため、タップしてもページがめくれません。
+   ============================================================ */
 .cover-emblem {
+  /* 既定はわずかに開いた状態（実写の絞りは全閉にならないため） */
+  --iris: 7;
   position: relative;
   width: 3.6em;
   height: 3.6em;
-  border-radius: 50%;
+  padding: 0;
   border: 2px solid rgba(242, 230, 214, 0.75);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
   box-shadow:
-    inset 0 0 0 0.3em rgba(242, 230, 214, 0.14),
+    inset 0 0 0 0.28em rgba(242, 230, 214, 0.14),
+    inset 0 0 0.9em rgba(0, 0, 0, 0.55),
     0 0.25em 0.8em rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.cover-emblem::before {
-  content: "";
-  width: 1.6em;
-  height: 1.6em;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #8a5054, #3f1e20 72%);
-  box-shadow: inset 0 0 0.4em rgba(0, 0, 0, 0.65);
+/* ホバーできる端末は触れるだけで開放、タップできない環境向けに
+   .is-open（JS でトグル）でも開放する */
+@media (hover: hover) and (pointer: fine) {
+  .cover-emblem:hover,
+  .cover-emblem:focus-visible {
+    --iris: 26;
+  }
 }
 
-.cover-emblem::after {
-  content: "";
-  position: absolute;
-  top: 0.62em;
-  left: 0.78em;
-  width: 0.55em;
-  height: 0.55em;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-  filter: blur(0.16em);
+.cover-emblem.is-open,
+.cover-emblem:focus-visible {
+  --iris: 26;
+}
+
+.cover-emblem:active {
+  transform: translateY(1px);
+}
+
+.cover-emblem svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 羽根本体。--px/--py はその羽根のピボットピン（ viewBox 上の絶対座標）。
+   transform-box: view-box にすると原点が viewBox 座標基準になり、
+   ピンが見える位置と回転中心がぴったり一致する。 */
+.cover-blade {
+  stroke: rgba(246, 236, 217, 0.5);
+  stroke-width: 0.7;
+  transform-box: view-box;
+  transform-origin: var(--px) var(--py);
+  transform: rotate(calc(var(--iris) * 1deg));
+  transition: transform 0.5s cubic-bezier(0.22, 0.68, 0.28, 1);
+}
+
+/* 羽根ごとにわずかに遅延をずらして機械的な動きに見せる */
+.cover-blade:nth-child(2) { transition-delay: 0.02s; }
+.cover-blade:nth-child(3) { transition-delay: 0.04s; }
+.cover-blade:nth-child(4) { transition-delay: 0.06s; }
+.cover-blade:nth-child(5) { transition-delay: 0.08s; }
+.cover-blade:nth-child(6) { transition-delay: 0.1s; }
+.cover-blade:nth-child(7) { transition-delay: 0.12s; }
+.cover-blade:nth-child(8) { transition-delay: 0.14s; }
+
+/* 開放時は羽根が鏡筒の縁まで引っ込むので、刃先の光が目立たなくなる */
+.cover-emblem.is-open .cover-blade,
+.cover-emblem:hover .cover-blade {
+  stroke-opacity: 0.32;
+}
+
+/* ピボットピン */
+.cover-pin {
+  fill: rgba(246, 236, 217, 0.55);
+  opacity: 0.55;
+  transition: opacity 0.4s ease;
+}
+
+.cover-emblem.is-open .cover-pin,
+.cover-emblem:hover .cover-pin {
+  opacity: 0.9;
+}
+
+/* 前玉の反射 */
+.cover-glare {
+  fill: rgba(255, 255, 255, 0.42);
+  filter: blur(1.6px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-blade,
+  .cover-pin {
+    transition-duration: 0.01s;
+    transition-delay: 0s;
+  }
 }
 
 /* 裏表紙は中央寄せにするだけ */

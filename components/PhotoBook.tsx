@@ -1,6 +1,6 @@
 "use client";
 import "@/styles/pageflip.css";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { PageFlip, SizeType } from "page-flip";
 import { Photo } from "@/types/PhotoBlog/photo";
 import { Book } from "@/types/PhotoBlog/book";
@@ -24,6 +24,106 @@ const coverChrome = () => (
     <div className="cover-frame" aria-hidden />
   </>
 );
+
+// レンズを模したエンブレム。
+// 実際の絞りと同じく、各羽根は自分のピボットピン（半径 Rp の円周上の点 P_i）を
+// 軸に --iris 度だけ「回転」する。羽根は鏡筒（半径 R）から切り出した円弧 edge を
+// 持ち、内側に寄せた切り取り円（半径 rho）で刃先を作る。回転すると切り取り円の
+// 中心 C がレンズ中心へ近づき、隣り合う羽根の C との距離分だけ正八角形の開口が開く。
+//   m(φ) = |C(φ)| = sqrt(R² + a² + 2·R·a·cos(β + φ))   （a = |C| の基準位置, β = 位相）
+//   開口の内接円半径 r(φ) = sqrt(rho² − m²sin²(π/16)) − m·cos(π/16)
+// 数値解（R=40, rho=30, a=45）で β=139.2°, φmax=26.0° となり、
+//   --iris: 0   → r = 0（完全閉）
+//   --iris: 7   → r ≈ 4.8（既定・わずかに開いた状態）
+//   --iris: 26  → r ≈ 18（鏡筒 R=40 に対し f/2.2 相当の大きな開口）
+// page-flip は button 要素上のポインター操作をページめくりに使わないため、
+// タップしてもページがめくれず、モバイルでも安全に操作できる。
+const LENS_R = 40;
+// 羽根の形状は viewBox 絶対座標で保持し、--px/--py にその羽根の回転中心（= ピボットピン）を持たせる。
+// CSS 側で transform-box: view-box / transform-origin: var(--px) var(--py) を当てることで、
+// 刃が実際に「見えるピンの上で」回転する。
+const BLADES: { d: string; px: number; py: number }[] = [
+  { d: "M 26.05 82.04 A 40 40 0 1 1 84.5 70.24 A 30 30 0 0 0 26.05 82.04 Z", px: 90, py: 50 },
+  { d: "M 10.41 55.72 A 40 40 0 1 1 60.09 88.71 A 30 30 0 0 0 10.41 55.72 Z", px: 78.28, py: 78.28 },
+  { d: "M 17.96 26.05 A 40 40 0 1 1 29.76 84.5 A 30 30 0 0 0 17.96 26.05 Z", px: 50, py: 90 },
+  { d: "M 44.28 10.41 A 40 40 0 1 1 11.29 60.09 A 30 30 0 0 0 44.28 10.41 Z", px: 21.72, py: 78.28 },
+  { d: "M 73.95 17.96 A 40 40 0 1 1 15.5 29.76 A 30 30 0 0 0 73.95 17.96 Z", px: 10, py: 50 },
+  { d: "M 89.59 44.28 A 40 40 0 1 1 39.91 11.29 A 30 30 0 0 0 89.59 44.28 Z", px: 21.72, py: 21.72 },
+  { d: "M 82.04 73.95 A 40 40 0 1 1 70.24 15.5 A 30 30 0 0 0 82.04 73.95 Z", px: 50, py: 10 },
+  { d: "M 55.72 89.59 A 40 40 0 1 1 88.71 39.91 A 30 30 0 0 0 55.72 89.59 Z", px: 78.28, py: 21.72 },
+];
+
+const LensEmblem = ({ label }: { label: string }) => {
+  const uid = useId().replace(/[:]/g, "");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <button
+      type="button"
+      className={`cover-emblem${open ? " is-open" : ""}`}
+      aria-label={label}
+      aria-pressed={open}
+      onClick={() => setOpen((v) => !v)}
+    >
+      <svg viewBox="0 0 100 100" aria-hidden focusable="false">
+        <defs>
+          <clipPath id={`${uid}-barrel`}>
+            <circle cx="50" cy="50" r={LENS_R} />
+          </clipPath>
+          {/* 羽根ごとの bbox に合わせて陰影を入れる（デフォルトの objectBoundingBox） */}
+          <linearGradient id={`${uid}-blade`} x1="0" y1="0" x2="0.9" y2="1">
+            <stop offset="0" stopColor="#8a5054" />
+            <stop offset="0.5" stopColor="#5c2b2e" />
+            <stop offset="1" stopColor="#331619" />
+          </linearGradient>
+          <radialGradient
+            id={`${uid}-glass`}
+            cx="0.36"
+            cy="0.3"
+            r="0.78"
+          >
+            <stop offset="0" stopColor="#9a6066" />
+            <stop offset="0.55" stopColor="#4a2226" />
+            <stop offset="1" stopColor="#1d0c0e" />
+          </radialGradient>
+        </defs>
+
+        {/* 鏡筒の奥にあるガラス（開口部から見えた色） */}
+        <circle cx="50" cy="50" r={LENS_R} fill={`url(#${uid}-glass)`} />
+
+        {/* 絞り羽根。鏡筒の縁より外には見えないのでクリップする。
+            回転は path 自身の CSS transform（transform-box: view-box）で行うため、
+            transform 属性は使わない（属性と CSS が競合すると属性が消える）。 */}
+        <g clipPath={`url(#${uid}-barrel)`}>
+          {BLADES.map((blade, i) => (
+            <path
+              key={i}
+              className="cover-blade"
+              d={blade.d}
+              fill={`url(#${uid}-blade)`}
+              style={{ "--px": `${blade.px}px`, "--py": `${blade.py}px` } as React.CSSProperties}
+            />
+          ))}
+        </g>
+
+        {/* 各羽根のピボットピン（＝回転中心と同一座標） */}
+        {BLADES.map((blade, i) => (
+          <circle key={i} className="cover-pin" cx={blade.px} cy={blade.py} r="1.6" />
+        ))}
+
+        {/* 前玉の反射 */}
+        <ellipse
+          className="cover-glare"
+          cx="37"
+          cy="33"
+          rx="11"
+          ry="6.5"
+          transform="rotate(-28 37 33)"
+        />
+      </svg>
+    </button>
+  );
+};
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return "";
@@ -178,7 +278,7 @@ const PhotoBook: React.FC<Props> = ({
                 </div>
               </figure>
             ) : (
-              <span className="cover-emblem" aria-hidden />
+              <LensEmblem label="エンブレム（絞り羽根）" />
             )}
 
             <div className="cover-titles">
@@ -202,7 +302,7 @@ const PhotoBook: React.FC<Props> = ({
       <div className="cover-face">
         {coverChrome()}
         <div className="cover-inner cover-inner--back">
-          <span className="cover-emblem" aria-hidden />
+          <LensEmblem label="エンブレム（絞り羽根）" />
           <p className="cover-back-title">{book?.title || "Photoblog"}</p>
           <div className="cover-rule" aria-hidden>
             <span />
