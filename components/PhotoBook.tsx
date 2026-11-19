@@ -91,6 +91,21 @@ const LensEmblem = ({ label }: { label: string }) => {
         {/* 鏡筒の奥にあるガラス（開口部から見えた色） */}
         <circle cx="50" cy="50" r={LENS_R} fill={`url(#${uid}-glass)`} />
 
+        {/* ガラス上の反射。絞り羽根より奥（＝開口部から見える分だけ光る）に置く。
+            閉じているときは羽根に隠れて構わないので、左上（ガラスの明るい位置）に寄せ、
+            傾きは立てて（-24° → -40°）開口の対角に沿う形にした。
+            鏡筒の縁より外には見えないのでクリップする。 */}
+        <g clipPath={`url(#${uid}-barrel)`}>
+          <ellipse
+            className="cover-glare"
+            cx="44"
+            cy="40"
+            rx="13"
+            ry="7"
+            transform="rotate(-40 44 40)"
+          />
+        </g>
+
         {/* 絞り羽根。鏡筒の縁より外には見えないのでクリップする。
             回転は path 自身の CSS transform（transform-box: view-box）で行うため、
             transform 属性は使わない（属性と CSS が競合すると属性が消える）。 */}
@@ -110,16 +125,6 @@ const LensEmblem = ({ label }: { label: string }) => {
         {BLADES.map((blade, i) => (
           <circle key={i} className="cover-pin" cx={blade.px} cy={blade.py} r="1.6" />
         ))}
-
-        {/* 前玉の反射 */}
-        <ellipse
-          className="cover-glare"
-          cx="37"
-          cy="33"
-          rx="11"
-          ry="6.5"
-          transform="rotate(-28 37 33)"
-        />
       </svg>
     </button>
   );

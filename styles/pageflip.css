@@ -337,7 +337,8 @@
    transform-box: view-box にすると原点が viewBox 座標基準になり、
    ピンが見える位置と回転中心がぴったり一致する。 */
 .cover-blade {
-  stroke: rgba(246, 236, 217, 0.5);
+  /* 刃先の光は開閉どちらでも同じ見え方に揃える（旧: 閉時 0.5 / 開時 0.5×0.32） */
+  stroke: rgba(246, 236, 217, 0.16);
   stroke-width: 0.7;
   transform-box: view-box;
   transform-origin: var(--px) var(--py);
@@ -353,12 +354,6 @@
 .cover-blade:nth-child(6) { transition-delay: 0.1s; }
 .cover-blade:nth-child(7) { transition-delay: 0.12s; }
 .cover-blade:nth-child(8) { transition-delay: 0.14s; }
-
-/* 開放時は羽根が鏡筒の縁まで引っ込むので、刃先の光が目立たなくなる */
-.cover-emblem.is-open .cover-blade,
-.cover-emblem:hover .cover-blade {
-  stroke-opacity: 0.32;
-}
 
 /* ピボットピン */
 .cover-pin {
