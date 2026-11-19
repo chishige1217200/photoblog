@@ -262,7 +262,7 @@ const PhotoBook: React.FC<Props> = ({
         <div className="cover-face">
           {coverChrome()}
           <div className="cover-inner">
-            <p className="cover-kicker">Photo Album</p>
+            <p className="cover-kicker">Photo Blog</p>
 
             {thumbnail?.url && thumbnail.width > 0 && thumbnail.height > 0 ? (
               <figure className="cover-media">
