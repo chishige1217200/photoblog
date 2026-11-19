@@ -15,6 +15,16 @@ type Props = {
   portrait?: boolean;
 };
 
+// 表紙・裏表紙の革の質感（下地・背表紙側の陰・金枠）。
+// .cover-inner の中へ置き、em がページ幅基準でスケールするようにする。
+const coverChrome = () => (
+  <>
+    <div className="cover-surface" aria-hidden />
+    <div className="cover-spine" aria-hidden />
+    <div className="cover-frame" aria-hidden />
+  </>
+);
+
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -141,45 +151,67 @@ const PhotoBook: React.FC<Props> = ({
 
   const renderCover = () => {
     const thumbnail = book?.thumbnail;
-    const isPortrait = !!thumbnail && thumbnail.height > thumbnail.width;
 
     return (
-      <div className="page" data-density="hard">
-        <div
-          className={`photo-container ${
-            thumbnail?.url
-              ? isPortrait
-                ? "portrait"
-                : "landscape"
-              : "justify-center"
-          } text-zinc-950 dark:text-zinc-50`}
-        >
-          {thumbnail?.url && book ? (
-            <>
-              <div className="image-area">
-                <Image
-                  src={thumbnail.url}
-                  alt={book.title ?? ""}
-                  width={thumbnail.width}
-                  height={thumbnail.height}
-                  loading="eager"
-                />
+      <div className="page cover cover--front" data-density="hard">
+        <div className="cover-face">
+          {coverChrome()}
+          <div className="cover-inner">
+            <p className="cover-kicker">Photo Album</p>
+
+            {thumbnail?.url && thumbnail.width > 0 && thumbnail.height > 0 ? (
+              <figure className="cover-media">
+                {/* 台紙を写真の縦横比に合わせて縁取りする */}
+                <div
+                  className="cover-photo"
+                  style={{
+                    aspectRatio: `${thumbnail.width} / ${thumbnail.height}`,
+                  }}
+                >
+                  <Image
+                    src={thumbnail.url}
+                    alt={book?.title ?? ""}
+                    width={thumbnail.width}
+                    height={thumbnail.height}
+                    loading="eager"
+                  />
+                </div>
+              </figure>
+            ) : (
+              <span className="cover-emblem" aria-hidden />
+            )}
+
+            <div className="cover-titles">
+              <h2 className="cover-title">{book?.title || "Photoblog"}</h2>
+              {book?.subTitle && (
+                <p className="cover-subtitle">{book.subTitle}</p>
+              )}
+              <div className="cover-rule" aria-hidden>
+                <span />
               </div>
-              <div className="info-area font-medium text-zinc-950 dark:text-zinc-50">
-                {book?.title && <h3 className="text-gray-900">{book.title}</h3>}
-                {book?.subTitle && (
-                  <p className="text-gray-700">{book.subTitle}</p>
-                )}
-                {book?.author && <p className="shotAt">著者: {book.author}</p>}
-              </div>
-            </>
-          ) : (
-            <h2 className="text-center text-5xl text-gray-900">Page Cover</h2>
-          )}
+              {book?.author && <p className="cover-author">{book.author}</p>}
+            </div>
+          </div>
         </div>
       </div>
     );
   };
+
+  const renderBackCover = () => (
+    <div className="page cover cover--back" data-density="hard">
+      <div className="cover-face">
+        {coverChrome()}
+        <div className="cover-inner cover-inner--back">
+          <span className="cover-emblem" aria-hidden />
+          <p className="cover-back-title">{book?.title || "Photoblog"}</p>
+          <div className="cover-rule" aria-hidden>
+            <span />
+          </div>
+          <p className="cover-back-note">The End</p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -234,18 +266,8 @@ const PhotoBook: React.FC<Props> = ({
           </div>
         );
       })}
-      {photos.length % 2 !== 0 && (
-        <div className="page">
-          <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
-            <h2 className="text-center text-5xl">Dummy</h2>
-          </div>
-        </div>
-      )}
-      <div className="page" data-density="hard">
-        <div className="photo-container justify-center text-zinc-950 dark:text-zinc-50">
-          <h2 className="text-center text-5xl">Page Cover</h2>
-        </div>
-      </div>
+      {photos.length % 2 !== 0 && <div className="page" />}
+      {renderBackCover()}
     </div>
   );
 };

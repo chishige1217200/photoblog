@@ -58,3 +58,287 @@
   font-size: 12px;
   color: #666;
 }
+
+/* ============================================================
+   表紙 / 裏表紙（フォトアルバム風）
+   ベースカラーは #663234。ページ実寸は page-flip が実行時に決めるため、
+   寸法はすべて em で書き、基準フォントをページ幅（cqi）から導く。
+   ============================================================ */
+.page.cover {
+  position: relative;
+  /* ページ幅を測る器。page-flip がインラインで幅・高さを確定する */
+  container-type: inline-size;
+  padding: 0;
+  overflow: hidden;
+  background: #663234;
+  border-color: #3a1c1e;
+  color: #f2e6d6;
+}
+
+/* 全装飾はこの面の中に置き、em がページ幅に追従するようにする */
+.cover-face {
+  position: absolute;
+  inset: 0;
+  font-size: 15px;
+  font-size: clamp(9px, 4.4cqi, 28px);
+}
+
+/* 革表紙の質感（上部の光沢・下部の沈み・細かな目） */
+.cover-surface {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(115% 70% at 50% -12%, rgba(255, 255, 255, 0.16), transparent 60%),
+    radial-gradient(120% 70% at 50% 118%, rgba(0, 0, 0, 0.38), transparent 66%),
+    linear-gradient(180deg, #7a4043 0%, #663234 44%, #54262a 100%);
+}
+
+.cover-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.04) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.06) 0 1px,
+      transparent 1px 4px
+    );
+}
+
+/* 背表紙側の陰。page-flip が付ける左右クラスに合わせて背の位置を決める
+   （左ページなら背は右辺、右ページなら背は左辺）。単体描画の既定は front=右 / back=左 */
+.cover-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12%;
+  pointer-events: none;
+}
+
+.cover--front .cover-spine {
+  right: 0;
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+.cover--back .cover-spine {
+  left: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+.stf__item--left .cover-spine {
+  left: auto;
+  right: 0;
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+.stf__item--right .cover-spine {
+  right: auto;
+  left: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+/* 金枠（二重線＋四隅の飾り） */
+.cover-frame {
+  position: absolute;
+  inset: 6% 7%;
+  border: 1.5px solid rgba(242, 230, 214, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.28),
+    inset 0 0 1.2em rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.cover-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0.45em;
+  border: 1px solid rgba(242, 230, 214, 0.22);
+  background:
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) top left / 1.6em 2px no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) top left / 2px 1.6em no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) top right / 1.6em 2px no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) top right / 2px 1.6em no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) bottom left / 1.6em 2px no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) bottom left / 2px 1.6em no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) bottom right / 1.6em 2px no-repeat,
+    linear-gradient(rgba(242, 230, 214, 0.85) 0 0) bottom right / 2px 1.6em no-repeat;
+}
+
+/* 内容の配置 */
+.cover-inner {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 12% 12%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: 1em;
+  text-align: center;
+}
+
+.cover-kicker {
+  font-size: 0.72em;
+  letter-spacing: 0.38em;
+  text-indent: 0.38em; /* 文字間ぶんの余白を打ち消して中央寄せ */
+  text-transform: uppercase;
+  color: rgba(242, 230, 214, 0.7);
+}
+
+/* サムネイルをマット（台紙）に載せた写真。
+   .cover-photo にはコンポーネント側で画像の縦横比をインライン指定する。 */
+.cover-media {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-photo {
+  box-sizing: border-box;
+  aspect-ratio: 4 / 3;
+  max-width: 92%;
+  max-height: 100%;
+  padding: 0.5em;
+  background: #f6ecdf;
+  box-shadow:
+    0 0.3em 1.1em rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.cover-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cover-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cover-title {
+  margin: 0;
+  font-family: Georgia, "Yu Mincho", "Hiragino Mincho ProN", "MS PMincho", serif;
+  font-size: 1.9em;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.1em;
+  color: #f6ecd9;
+  /* 革に押し付けた（デボス）感じ */
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.cover-subtitle {
+  margin: 0.4em 0 0;
+  font-size: 0.95em;
+  letter-spacing: 0.08em;
+  color: rgba(246, 236, 217, 0.82);
+}
+
+/* 線＋中央の菱 */
+.cover-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  width: 7em;
+  margin: 0.9em auto 0;
+}
+
+.cover-rule::before,
+.cover-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(242, 230, 214, 0.45);
+}
+
+.cover-rule span {
+  width: 0.42em;
+  height: 0.42em;
+  transform: rotate(45deg);
+  background: rgba(242, 230, 214, 0.85);
+}
+
+.cover-author {
+  margin: 0.7em 0 0;
+  font-size: 0.8em;
+  letter-spacing: 0.14em;
+  color: rgba(242, 230, 214, 0.72);
+}
+
+/* レンズ（絞り）を模したエンブレム */
+.cover-emblem {
+  position: relative;
+  width: 3.6em;
+  height: 3.6em;
+  border-radius: 50%;
+  border: 2px solid rgba(242, 230, 214, 0.75);
+  box-shadow:
+    inset 0 0 0 0.3em rgba(242, 230, 214, 0.14),
+    0 0.25em 0.8em rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-emblem::before {
+  content: "";
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8a5054, #3f1e20 72%);
+  box-shadow: inset 0 0 0.4em rgba(0, 0, 0, 0.65);
+}
+
+.cover-emblem::after {
+  content: "";
+  position: absolute;
+  top: 0.62em;
+  left: 0.78em;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  filter: blur(0.16em);
+}
+
+/* 裏表紙は中央寄せにするだけ */
+.cover-inner--back {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2em;
+}
+
+.cover-back-title {
+  margin: 0;
+  font-family: Georgia, "Yu Mincho", "Hiragino Mincho ProN", "MS PMincho", serif;
+  font-size: 1.15em;
+  letter-spacing: 0.16em;
+  color: rgba(246, 236, 217, 0.85);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    0 -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.cover-back-note {
+  margin: 0;
+  font-size: 0.78em;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  text-transform: uppercase;
+  color: rgba(242, 230, 214, 0.55);
+}
